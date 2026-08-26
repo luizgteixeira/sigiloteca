@@ -5,6 +5,7 @@ import { UploadForm } from '@/components/upload-form';
 import { NewOficioForm } from '@/components/new-oficio-form';
 import { DocumentList, type DocumentoRow } from '@/components/document-list';
 import Image from 'next/image';
+import Link from 'next/link';
 
 const CATEGORIAS = [
   { value: '', label: 'Todas as categorias' },
@@ -111,6 +112,12 @@ export default async function Home({
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <Link
+            href="/conta"
+            className="rounded-md border border-line px-3 py-2 font-body text-sm text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink"
+          >
+            Alterar senha
+          </Link>
           <a
             href="/api/exportar"
             className="rounded-md border border-line px-3 py-2 font-body text-sm text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink"

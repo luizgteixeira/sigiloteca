@@ -2,18 +2,26 @@
 
 import { useState } from 'react';
 
-export function PasswordField() {
+export function PasswordField({
+  id = 'password',
+  name = 'password',
+  autoComplete = 'current-password',
+}: {
+  id?: string;
+  name?: string;
+  autoComplete?: string;
+}) {
   const [visible, setVisible] = useState(false);
   const [password, setPassword] = useState('');
 
   return (
     <div className="relative">
       <input
-        id="password"
-        name="password"
+        id={id}
+        name={name}
         type={visible ? 'text' : 'password'}
         required
-        autoComplete="current-password"
+        autoComplete={autoComplete}
         value={password}
         onChange={(event) => setPassword(event.target.value)}
         className="w-full rounded-md border border-line bg-surface-2 px-3 py-2 pr-24 font-body text-ink"
