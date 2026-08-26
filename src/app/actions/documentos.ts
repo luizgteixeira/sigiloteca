@@ -3,6 +3,14 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 
+// Server Actions que lançam Error têm a mensagem escondida pelo Next.js em
+// produção (React error #441, "omitted in production builds"). Por isso
+// essas actions retornam { error } em vez de dar throw — é o padrão
+// recomendado pelo próprio Next.js para erros esperados de negócio.
+export type ActionResult<T extends object = object> =
+  | ({ error: null } & T)
+  | { error: string };
+
 export type CreateDocumentoInput = {
   id: string;
   workspaceId: string;
@@ -17,7 +25,9 @@ export type CreateDocumentoInput = {
   retentionUntil?: string;
 };
 
-export async function createDocumento(input: CreateDocumentoInput) {
+export async function createDocumento(
+  input: CreateDocumentoInput
+): Promise<ActionResult> {
   const supabase = await createClient();
 
   const { error } = await supabase.from('documento').insert({
@@ -38,10 +48,11 @@ export async function createDocumento(input: CreateDocumentoInput) {
   });
 
   if (error) {
-    throw error;
+    return { error: error.message };
   }
 
   revalidatePath('/');
+  return { error: null };
 }
 
 export type CreateOficioFromModeloInput = {
@@ -56,10 +67,10 @@ export type CreateOficioFromModeloInput = {
 
 export async function createOficioFromModelo(
   input: CreateOficioFromModeloInput
-) {
+): Promise<ActionResult<{ documentoId: string }>> {
   const titulo = input.titulo.trim();
   if (!titulo) {
-    throw new Error('Título é obrigatório.');
+    return { error: 'Título é obrigatório.' };
   }
 
   const supabase = await createClient();
@@ -72,10 +83,10 @@ export async function createOficioFromModelo(
     .maybeSingle();
 
   if (modeloError) {
-    throw modeloError;
+    return { error: modeloError.message };
   }
   if (!modelo) {
-    throw new Error('Nenhum modelo padrão de Ofícios foi cadastrado.');
+    return { error: 'Nenhum modelo padrão de Ofícios foi cadastrado.' };
   }
 
   const documentoId = crypto.randomUUID();
@@ -87,7 +98,7 @@ export async function createOficioFromModelo(
     .copy(modelo.storage_path, storagePath);
 
   if (copyError) {
-    throw copyError;
+    return { error: copyError.message };
   }
 
   const { error: documentoError } = await supabase.from('documento').insert({
@@ -108,7 +119,7 @@ export async function createOficioFromModelo(
 
   if (documentoError) {
     await supabase.storage.from('documentos').remove([storagePath]);
-    throw documentoError;
+    return { error: documentoError.message };
   }
 
   const { error: versaoError } = await supabase
@@ -123,17 +134,17 @@ export async function createOficioFromModelo(
   if (versaoError) {
     await supabase.from('documento').delete().eq('id', documentoId);
     await supabase.storage.from('documentos').remove([storagePath]);
-    throw versaoError;
+    return { error: versaoError.message };
   }
 
   revalidatePath('/');
-  return { documentoId };
+  return { error: null, documentoId };
 }
 
 export async function deleteDocumento(
   documentoId: string,
   workspaceId: string
-) {
+): Promise<ActionResult> {
   const supabase = await createClient();
   const { data: documento, error: documentoError } = await supabase
     .from('documento')
@@ -143,18 +154,18 @@ export async function deleteDocumento(
     .maybeSingle();
 
   if (documentoError) {
-    throw documentoError;
+    return { error: documentoError.message };
   }
   if (!documento) {
-    throw new Error('Documento não encontrado.');
+    return { error: 'Documento não encontrado.' };
   }
   if (
     documento.retention_until &&
     new Date(documento.retention_until).getTime() > Date.now()
   ) {
-    throw new Error(
-      `Este documento está retido até ${new Date(documento.retention_until).toLocaleDateString('pt-BR')}.`
-    );
+    return {
+      error: `Este documento está retido até ${new Date(documento.retention_until).toLocaleDateString('pt-BR')}.`,
+    };
   }
 
   const { data: versoes, error: versoesError } = await supabase
@@ -163,7 +174,7 @@ export async function deleteDocumento(
     .eq('documento_id', documento.id);
 
   if (versoesError) {
-    throw versoesError;
+    return { error: versoesError.message };
   }
 
   const paths = Array.from(
@@ -177,7 +188,7 @@ export async function deleteDocumento(
     .remove(paths);
 
   if (storageError) {
-    throw storageError;
+    return { error: storageError.message };
   }
 
   const { error: deleteError } = await supabase
@@ -187,8 +198,9 @@ export async function deleteDocumento(
     .eq('workspace_id', workspaceId);
 
   if (deleteError) {
-    throw deleteError;
+    return { error: deleteError.message };
   }
 
   revalidatePath('/');
+  return { error: null };
 }

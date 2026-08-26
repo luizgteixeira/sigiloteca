@@ -113,7 +113,7 @@ export function UploadForm({ workspaceId }: { workspaceId: string }) {
         throw uploadError;
       }
 
-      await createDocumento({
+      const result = await createDocumento({
         id: documentoId,
         workspaceId,
         categoria,
@@ -126,6 +126,11 @@ export function UploadForm({ workspaceId }: { workspaceId: string }) {
         isModeloPadrao,
         retentionUntil,
       });
+
+      if (result.error) {
+        setErrorMsg(result.error);
+        return;
+      }
 
       formRef.current?.reset();
       setCategoriaSelecionada('');

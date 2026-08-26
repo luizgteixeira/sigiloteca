@@ -23,7 +23,7 @@ export function NewOficioForm({ workspaceId }: { workspaceId: string }) {
 
     setSubmitting(true);
     try {
-      await createOficioFromModelo({
+      const result = await createOficioFromModelo({
         workspaceId,
         titulo,
         cliente: String(formData.get('cliente') ?? ''),
@@ -32,6 +32,12 @@ export function NewOficioForm({ workspaceId }: { workspaceId: string }) {
         tags,
         retentionUntil: String(formData.get('retentionUntil') ?? ''),
       });
+
+      if (result.error) {
+        setErrorMsg(result.error);
+        return;
+      }
+
       formRef.current?.reset();
       router.refresh();
     } catch (err) {

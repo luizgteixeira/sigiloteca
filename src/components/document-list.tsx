@@ -47,7 +47,11 @@ export function DocumentList({
 
     setDeletingId(documentoPendente.id);
     try {
-      await deleteDocumento(documentoPendente.id, workspaceId);
+      const result = await deleteDocumento(documentoPendente.id, workspaceId);
+      if (result.error) {
+        setErrorMsg(result.error);
+        return;
+      }
       setDocumentoPendente(null);
     } catch (error) {
       setErrorMsg(
