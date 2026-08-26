@@ -68,11 +68,6 @@ export function DocumentList({
 
   return (
     <div className="flex flex-col gap-3">
-      {errorMsg && (
-        <p className="rounded-md bg-danger-soft px-3 py-2 font-body text-sm text-danger">
-          {errorMsg}
-        </p>
-      )}
       <aside className="rounded-md border border-warning bg-warning-soft px-4 py-3 font-body text-sm text-ink">
         <strong className="font-semibold">Atenção:</strong> a exclusão remove o
         arquivo, o registro da base de dados e todo o histórico de versões. Essa
@@ -175,6 +170,11 @@ export function DocumentList({
                 Aviso 3: todas as versões e o histórico serão apagados.
               </p>
               <p>Essa operação não pode ser desfeita.</p>
+              {errorMsg && (
+                <p className="rounded-md bg-danger-soft px-3 py-2 font-semibold text-danger">
+                  {errorMsg}
+                </p>
+              )}
               <label className="flex flex-col gap-1 font-mono text-xs uppercase tracking-wide text-ink-muted">
                 Digite EXCLUIR para confirmar
                 <input
