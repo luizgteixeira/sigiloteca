@@ -90,7 +90,7 @@ export function InactivityGuard() {
           Sua sessão vai expirar
         </h2>
         <p className="mt-3 font-body text-sm text-ink-muted">
-          Por segurança, você será desconectada por inatividade em{' '}
+          Por segurança, a sessão vai expirar por inatividade em{' '}
           <strong className="text-ink">
             {minutos}:{segundos.toString().padStart(2, '0')}
           </strong>
@@ -101,7 +101,7 @@ export function InactivityGuard() {
           onClick={continuarConectada}
           className="mt-5 w-full rounded-md bg-accent px-4 py-2 font-body font-medium text-surface transition-colors hover:bg-accent/85"
         >
-          Continuar conectada
+          Manter sessão ativa
         </button>
       </div>
     </div>

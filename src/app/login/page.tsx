@@ -40,7 +40,7 @@ export default async function LoginPage({
         )}
         {motivo === 'inatividade' && (
           <p className="mt-4 rounded-md bg-warning-soft px-3 py-2 font-body text-sm text-ink">
-            Você foi desconectada por inatividade. Entre novamente para
+            Sua sessão expirou por inatividade. Entre novamente para
             continuar.
           </p>
         )}
