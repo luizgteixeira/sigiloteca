@@ -59,6 +59,13 @@ export default async function Home({
   const { data: documentos } = await query;
   const rows = documentos ?? [];
 
+  const { data: clientesRows } = await supabase
+    .from('cliente')
+    .select('id, nome')
+    .eq('workspace_id', workspace.id)
+    .order('nome');
+  const clientes = clientesRows ?? [];
+
   const paths = rows.map((doc) => doc.storage_path);
   let signedUrls: { signedUrl: string | null; path: string | null }[] = [];
   if (paths.length) {
@@ -114,6 +121,12 @@ export default async function Home({
         </div>
         <div className="flex items-center gap-3">
           <Link
+            href="/clientes"
+            className="rounded-md border border-line px-3 py-2 font-body text-sm text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink"
+          >
+            Clientes
+          </Link>
+          <Link
             href="/conta"
             className="rounded-md border border-line px-3 py-2 font-body text-sm text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink"
           >
@@ -136,8 +149,8 @@ export default async function Home({
         </div>
       </header>
 
-      <UploadForm workspaceId={workspace.id} />
-      <NewOficioForm workspaceId={workspace.id} />
+      <UploadForm workspaceId={workspace.id} clientes={clientes} />
+      <NewOficioForm workspaceId={workspace.id} clientes={clientes} />
 
       <form method="get" className="flex flex-wrap gap-3">
         <input

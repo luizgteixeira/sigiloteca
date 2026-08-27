@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { createDocumento } from '@/app/actions/documentos';
+import { ClienteCombobox, type ClienteOption } from './cliente-combobox';
 
 const CATEGORIAS = [
   { value: 'peticoes', label: 'Petições' },
@@ -28,12 +29,19 @@ function sanitizeFilename(filename: string): string {
   return semAcento.replace(/[^a-zA-Z0-9._-]/g, '_');
 }
 
-export function UploadForm({ workspaceId }: { workspaceId: string }) {
+export function UploadForm({
+  workspaceId,
+  clientes,
+}: {
+  workspaceId: string;
+  clientes: ClienteOption[];
+}) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [categoriaSelecionada, setCategoriaSelecionada] = useState('');
+  const [clienteComboboxKey, setClienteComboboxKey] = useState(0);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const previewUrlRef = useRef<string | null>(null);
@@ -74,7 +82,7 @@ export function UploadForm({ workspaceId }: { workspaceId: string }) {
     const file = formData.get('file') as File | null;
     const titulo = String(formData.get('titulo') ?? '').trim();
     const categoria = String(formData.get('categoria') ?? '');
-    const cliente = String(formData.get('cliente') ?? '').trim();
+    const clienteId = String(formData.get('clienteId') ?? '').trim();
     const processo = String(formData.get('processo') ?? '').trim();
     const area = String(formData.get('area') ?? '').trim();
     const isModeloPadrao = formData.get('isModeloPadrao') === 'on';
@@ -118,7 +126,7 @@ export function UploadForm({ workspaceId }: { workspaceId: string }) {
         workspaceId,
         categoria,
         titulo,
-        cliente,
+        clienteId: clienteId || undefined,
         processo,
         area,
         tags,
@@ -134,6 +142,7 @@ export function UploadForm({ workspaceId }: { workspaceId: string }) {
 
       formRef.current?.reset();
       setCategoriaSelecionada('');
+      setClienteComboboxKey((key) => key + 1);
       if (previewUrlRef.current) {
         URL.revokeObjectURL(previewUrlRef.current);
         previewUrlRef.current = null;
@@ -311,20 +320,11 @@ export function UploadForm({ workspaceId }: { workspaceId: string }) {
           />
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label
-            htmlFor="cliente"
-            className="font-mono text-xs uppercase tracking-wide text-ink-muted"
-          >
-            Cliente
-          </label>
-          <input
-            id="cliente"
-            name="cliente"
-            type="text"
-            className="rounded-md border border-line bg-surface-2 px-3 py-2 font-body text-sm text-ink"
-          />
-        </div>
+        <ClienteCombobox
+          key={clienteComboboxKey}
+          clientes={clientes}
+          name="clienteId"
+        />
 
         <div className="flex flex-col gap-1">
           <label

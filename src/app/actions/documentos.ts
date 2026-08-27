@@ -11,12 +11,36 @@ export type ActionResult<T extends object = object> =
   | ({ error: null } & T)
   | { error: string };
 
+async function resolveClienteNome(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  workspaceId: string,
+  clienteId?: string
+): Promise<{ nome: string | null; error?: string }> {
+  if (!clienteId) {
+    return { nome: null };
+  }
+  const { data: cliente, error } = await supabase
+    .from('cliente')
+    .select('nome')
+    .eq('id', clienteId)
+    .eq('workspace_id', workspaceId)
+    .maybeSingle();
+
+  if (error) {
+    return { nome: null, error: error.message };
+  }
+  if (!cliente) {
+    return { nome: null, error: 'Cliente não encontrado.' };
+  }
+  return { nome: cliente.nome };
+}
+
 export type CreateDocumentoInput = {
   id: string;
   workspaceId: string;
   categoria: string;
   titulo: string;
-  cliente?: string;
+  clienteId?: string;
   processo?: string;
   area?: string;
   tags: string[];
@@ -30,12 +54,19 @@ export async function createDocumento(
 ): Promise<ActionResult> {
   const supabase = await createClient();
 
+  const { nome: clienteNome, error: clienteError } =
+    await resolveClienteNome(supabase, input.workspaceId, input.clienteId);
+  if (clienteError) {
+    return { error: clienteError };
+  }
+
   const { error } = await supabase.from('documento').insert({
     id: input.id,
     workspace_id: input.workspaceId,
     categoria: input.categoria,
     titulo: input.titulo,
-    cliente: input.cliente || null,
+    cliente: clienteNome,
+    cliente_id: input.clienteId || null,
     processo: input.processo || null,
     area: input.area || null,
     tags: input.tags,
@@ -58,7 +89,7 @@ export async function createDocumento(
 export type CreateOficioFromModeloInput = {
   workspaceId: string;
   titulo: string;
-  cliente?: string;
+  clienteId?: string;
   processo?: string;
   area?: string;
   tags?: string[];
@@ -74,6 +105,13 @@ export async function createOficioFromModelo(
   }
 
   const supabase = await createClient();
+
+  const { nome: clienteNome, error: clienteError } =
+    await resolveClienteNome(supabase, input.workspaceId, input.clienteId);
+  if (clienteError) {
+    return { error: clienteError };
+  }
+
   const { data: modelo, error: modeloError } = await supabase
     .from('documento')
     .select('storage_path')
@@ -106,7 +144,8 @@ export async function createOficioFromModelo(
     workspace_id: input.workspaceId,
     categoria: 'oficios',
     titulo,
-    cliente: input.cliente?.trim() || null,
+    cliente: clienteNome,
+    cliente_id: input.clienteId || null,
     processo: input.processo?.trim() || null,
     area: input.area?.trim() || null,
     tags: input.tags ?? [],

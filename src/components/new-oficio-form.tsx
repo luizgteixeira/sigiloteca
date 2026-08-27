@@ -3,8 +3,15 @@
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createOficioFromModelo } from '@/app/actions/documentos';
+import { ClienteCombobox, type ClienteOption } from './cliente-combobox';
 
-export function NewOficioForm({ workspaceId }: { workspaceId: string }) {
+export function NewOficioForm({
+  workspaceId,
+  clientes,
+}: {
+  workspaceId: string;
+  clientes: ClienteOption[];
+}) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -26,7 +33,7 @@ export function NewOficioForm({ workspaceId }: { workspaceId: string }) {
       const result = await createOficioFromModelo({
         workspaceId,
         titulo,
-        cliente: String(formData.get('cliente') ?? ''),
+        clienteId: String(formData.get('clienteId') ?? '').trim() || undefined,
         processo: String(formData.get('processo') ?? ''),
         area: String(formData.get('area') ?? ''),
         tags,
@@ -80,13 +87,7 @@ export function NewOficioForm({ workspaceId }: { workspaceId: string }) {
           aria-label="Título do Ofício"
           className="rounded-md border border-line bg-surface-2 px-3 py-2 font-body text-sm text-ink sm:col-span-2"
         />
-        <input
-          name="cliente"
-          type="text"
-          placeholder="Cliente"
-          aria-label="Cliente"
-          className="rounded-md border border-line bg-surface-2 px-3 py-2 font-body text-sm text-ink"
-        />
+        <ClienteCombobox clientes={clientes} name="clienteId" label="" />
         <input
           name="processo"
           type="text"
