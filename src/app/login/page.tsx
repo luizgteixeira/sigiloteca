@@ -5,9 +5,9 @@ import { PasswordField } from '@/components/password-field';
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; motivo?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, motivo } = await searchParams;
 
   return (
     <div className="flex min-h-full flex-1 items-center justify-center bg-bg px-4">
@@ -36,6 +36,12 @@ export default async function LoginPage({
         {error && (
           <p className="mt-4 rounded-md bg-danger-soft px-3 py-2 font-body text-sm text-danger">
             Email ou senha inválidos.
+          </p>
+        )}
+        {motivo === 'inatividade' && (
+          <p className="mt-4 rounded-md bg-warning-soft px-3 py-2 font-body text-sm text-ink">
+            Você foi desconectada por inatividade. Entre novamente para
+            continuar.
           </p>
         )}
 

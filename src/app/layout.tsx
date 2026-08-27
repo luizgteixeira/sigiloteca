@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Fraunces, Source_Sans_3, IBM_Plex_Mono } from 'next/font/google';
+import { InactivityGuard } from '@/components/inactivity-guard';
 import './globals.css';
 
 const fraunces = Fraunces({
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
       className={`${fraunces.variable} ${sourceSans.variable} ${ibmPlexMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
+        <InactivityGuard />
         {children}
         <footer className="border-t border-line bg-surface px-4 py-5">
           <div className="mx-auto w-full max-w-4xl text-center">
