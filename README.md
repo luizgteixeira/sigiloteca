@@ -39,10 +39,13 @@ Checklist do ADR-001:
 - [x] Controles mínimos de segurança — autenticação, RLS por workspace, Storage privado, exportação autenticada, exclusão confirmada e política de retenção (bloqueada tanto no app quanto no banco, via triggers)
 - [x] Deploy em produção: **sigiloteca.com.br** hospedado na Hostinger (plano Business, Node.js/Web Apps), deploy automático a cada push na branch `main` do repositório GitHub `luizgteixeira/sigiloteca-prod`
 - [x] Auditoria de segurança do código completo (controle de acesso, upload, exportação em ZIP, geração de Ofícios) — um achado real corrigido: retenção documental era checada só no app, não no banco (bypassável via REST/Storage API direta); agora há triggers Postgres bloqueando `DELETE`/`UPDATE` de documentos retidos, tanto na tabela `documento` quanto em `storage.objects`
+- [x] Preenchimento de Ofício direto na tela — "Criar e preencher" leva a um editor em tela (contador de campos `[entre colchetes]` pendentes, botão "Salvar Ofício"), sem baixar/reenviar arquivo manualmente
+- [x] Cadastro de clientes (tela `/clientes`: nome, endereço, email, celular, CPF opcional) + combobox de busca nos formulários de documento/Ofício, vinculando por `cliente_id` sem perder o campo `cliente` (texto) já usado pela busca full-text
+- [x] Logout automático por inatividade (2h sem uso, aviso 1min antes) — resposta a uma preocupação de segurança da cliente; o controle de expiração pelo painel do Supabase exige plano Pro, então a solução ficou no próprio app
 - [ ] **← PRÓXIMO PASSO: Usar em produção por 2–3 semanas e ajustar a organização antes de pensar em multiusuário**
-- [ ] Se validar: revisar LGPD e sigilo profissional antes de abrir para outros advogados
+- [ ] Revisar LGPD e sigilo profissional antes de abrir para outros advogados — reunião com a cliente marcada para 28/08/2026, sujeita à confirmação dela
 
-**Importante:** o app está funcional de ponta a ponta em produção — login, upload, categorização, busca, exclusão e exportação testados no navegador com o usuário real e com a cliente, incluindo bugs achados e corrigidos no processo (busca full-text precisou virar trigger em vez de coluna gerada; nomes de arquivo com acento quebravam a chave no Storage, agora sanitizados; a migração de retenção não tinha sido aplicada no banco de produção, quebrando toda exclusão até ser corrigida; a mensagem de erro do modal de exclusão ficava escondida atrás do próprio modal). O modelo padrão de Ofício já pode gerar novos Ofícios, com a cópia registrada como versão inicial em `documento_versao`. A exportação completa em `.zip` é autenticada, limitada a 500 documentos/500 MB e inclui os arquivos do Storage e um `manifest.json` com os metadados. Documentos podem ter retenção manual ou data fixa, que bloqueia a exclusão antes do prazo — reforçado a nível de banco, não só de aplicação. SSL/HTTPS ativo via Hostinger; o app redireciona HTTP para HTTPS e envia headers de segurança. O próximo passo é usar o sistema em produção por 2–3 semanas e ajustar a organização. Rename para Sigiloteca commitado (`1550913`); funcionalidade em si segue a partir de `a7dfe48`.
+**Importante:** o app está funcional de ponta a ponta em produção — login, upload, categorização, busca, exclusão e exportação testados no navegador com o usuário real e com a cliente, incluindo bugs achados e corrigidos no processo (busca full-text precisou virar trigger em vez de coluna gerada; nomes de arquivo com acento quebravam a chave no Storage, agora sanitizados; a migração de retenção não tinha sido aplicada no banco de produção, quebrando toda exclusão até ser corrigida; a mensagem de erro do modal de exclusão ficava escondida atrás do próprio modal; a separação entre corpo do Ofício e orientações de preenchimento falhava por causa de quebra de linha estilo Windows `\r\n`). O modelo padrão de Ofício já pode gerar novos Ofícios, com a cópia registrada como versão inicial em `documento_versao`, e o preenchimento acontece direto numa tela própria. A exportação completa em `.zip` é autenticada, limitada a 500 documentos/500 MB e inclui os arquivos do Storage e um `manifest.json` com os metadados. Documentos podem ter retenção manual ou data fixa, que bloqueia a exclusão antes do prazo — reforçado a nível de banco, não só de aplicação. SSL/HTTPS ativo via Hostinger; o app redireciona HTTP para HTTPS e envia headers de segurança. A sessão expira sozinha após 2h de inatividade. O próximo passo é usar o sistema em produção por 2–3 semanas e ajustar a organização. Rename para Sigiloteca commitado (`1550913`); funcionalidade em si segue a partir de `a7dfe48`.
 
 ## O que já existe neste repositório
 
@@ -67,17 +70,23 @@ sigiloteca/
 │       ├── 20260820000002_storage_documentos.sql    Bucket "documentos" + RLS de Storage
 │       ├── 20260820000003_documento_busca.sql       Busca full-text via trigger (tsvector + GIN)
 │       ├── 20260821000004_retencao_documentos.sql   Política de retenção e descarte
-│       └── 20260826000005_retencao_bloqueio_bd.sql  Retenção reforçada no banco (triggers em documento e storage.objects)
+│       ├── 20260826000005_retencao_bloqueio_bd.sql  Retenção reforçada no banco (triggers em documento e storage.objects)
+│       └── 20260827000006_cadastro_clientes.sql     Tabela cliente + RLS + documento.cliente_id
 ├── src/
 │   ├── proxy.ts           Sessão + proteção de rotas (convenção Next 16, era middleware.ts)
 │   ├── app/
 │   │   ├── page.tsx        Dashboard: upload, filtro/busca, lista de documentos
-│   │   ├── layout.tsx      Fontes da marca (Fraunces/Source Sans 3/IBM Plex Mono)
+│   │   ├── layout.tsx      Fontes da marca + InactivityGuard (logout automático)
 │   │   ├── login/          Tela de login (email+senha) + server action
+│   │   ├── conta/          Tela de troca de senha
+│   │   ├── clientes/       Tela de cadastro de clientes (criar, editar, excluir)
+│   │   ├── documentos/[id]/editar/  Editor de Ofício em tela (preencher + salvar)
 │   │   ├── actions.ts       Server action de logout
-│   │   ├── actions/documentos.ts   Server actions: criar documento, criar Ofício a partir do modelo, excluir documento
+│   │   ├── actions/documentos.ts   Server actions: criar documento, criar/editar Ofício a partir do modelo, excluir documento
+│   │   ├── actions/clientes.ts     Server actions: criar, editar, excluir cliente
 │   │   └── api/exportar/route.ts   Rota autenticada de exportação em .zip (documentos + manifest.json)
-│   ├── components/         UploadForm, NewOficioForm, DocumentList (com modal de confirmação de exclusão)
+│   ├── components/         UploadForm, NewOficioForm, DocumentList, OficioEditor, ClienteForm,
+│   │                       ClienteList, ClienteCombobox, InactivityGuard
 │   └── lib/
 │       ├── supabase/       client.ts, server.ts, middleware.ts (sessão)
 │       └── workspace.ts    getOrCreateWorkspace (bootstrap do workspace único)
