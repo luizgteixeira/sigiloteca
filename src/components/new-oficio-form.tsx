@@ -33,13 +33,13 @@ export function NewOficioForm({ workspaceId }: { workspaceId: string }) {
         retentionUntil: String(formData.get('retentionUntil') ?? ''),
       });
 
-      if (result.error) {
+      if (result.error !== null) {
         setErrorMsg(result.error);
         return;
       }
 
       formRef.current?.reset();
-      router.refresh();
+      router.push(`/documentos/${result.documentoId}/editar`);
     } catch (err) {
       setErrorMsg(
         err instanceof Error ? err.message : 'Erro ao criar o Ofício.'
@@ -60,7 +60,8 @@ export function NewOficioForm({ workspaceId }: { workspaceId: string }) {
           Novo Ofício
         </h2>
         <p className="font-body text-sm text-ink-muted">
-          Criado a partir do modelo padrão.
+          Criado a partir do modelo padrão — a próxima tela já abre pronta
+          para você preencher.
         </p>
       </div>
 
@@ -122,7 +123,7 @@ export function NewOficioForm({ workspaceId }: { workspaceId: string }) {
         disabled={submitting}
         className="self-start rounded-md bg-accent px-4 py-2 font-body font-medium text-surface transition-colors hover:bg-accent/85 disabled:opacity-60 disabled:hover:bg-accent"
       >
-        {submitting ? 'Criando...' : 'Criar a partir do modelo'}
+        {submitting ? 'Criando...' : 'Criar e preencher'}
       </button>
     </form>
   );

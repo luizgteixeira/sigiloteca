@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { deleteDocumento } from '@/app/actions/documentos';
 
 const CATEGORIA_LABELS: Record<string, string> = {
@@ -21,6 +22,7 @@ export type DocumentoRow = {
   tags: string[];
   created_at: string;
   signedUrl: string | null;
+  isModeloPadrao: boolean;
 };
 
 export function DocumentList({
@@ -117,6 +119,15 @@ export function DocumentList({
                 </td>
                 <td className="px-4 py-3 text-right">
                   <div className="flex items-center justify-end gap-3">
+                    {documento.categoria === 'oficios' &&
+                    !documento.isModeloPadrao ? (
+                      <Link
+                        href={`/documentos/${documento.id}/editar`}
+                        className="font-body text-sm font-medium text-accent underline transition-colors hover:text-ink"
+                      >
+                        Editar
+                      </Link>
+                    ) : null}
                     {documento.signedUrl ? (
                       <a
                         href={documento.signedUrl}

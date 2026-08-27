@@ -141,6 +141,79 @@ export async function createOficioFromModelo(
   return { error: null, documentoId };
 }
 
+export type UpdateOficioConteudoInput = {
+  documentoId: string;
+  workspaceId: string;
+  conteudo: string;
+};
+
+export async function updateOficioConteudo(
+  input: UpdateOficioConteudoInput
+): Promise<ActionResult> {
+  const conteudo = input.conteudo.trim();
+  if (!conteudo) {
+    return { error: 'O conteúdo não pode ficar vazio.' };
+  }
+
+  const supabase = await createClient();
+  const { data: documento, error: documentoError } = await supabase
+    .from('documento')
+    .select('storage_path, categoria, is_modelo_padrao')
+    .eq('id', input.documentoId)
+    .eq('workspace_id', input.workspaceId)
+    .maybeSingle();
+
+  if (documentoError) {
+    return { error: documentoError.message };
+  }
+  if (!documento) {
+    return { error: 'Documento não encontrado.' };
+  }
+  if (documento.categoria !== 'oficios' || documento.is_modelo_padrao) {
+    return { error: 'Este documento não pode ser editado por aqui.' };
+  }
+
+  const { error: uploadError } = await supabase.storage
+    .from('documentos')
+    .upload(documento.storage_path, conteudo, {
+      upsert: true,
+      contentType: 'text/markdown; charset=utf-8',
+    });
+
+  if (uploadError) {
+    return { error: uploadError.message };
+  }
+
+  const { data: ultimaVersao, error: ultimaVersaoError } = await supabase
+    .from('documento_versao')
+    .select('numero')
+    .eq('documento_id', input.documentoId)
+    .order('numero', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (ultimaVersaoError) {
+    return { error: ultimaVersaoError.message };
+  }
+
+  const { error: versaoError } = await supabase
+    .from('documento_versao')
+    .insert({
+      documento_id: input.documentoId,
+      numero: (ultimaVersao?.numero ?? 0) + 1,
+      storage_provider: 'supabase',
+      storage_path: documento.storage_path,
+    });
+
+  if (versaoError) {
+    return { error: versaoError.message };
+  }
+
+  revalidatePath('/');
+  revalidatePath(`/documentos/${input.documentoId}/editar`);
+  return { error: null };
+}
+
 export async function deleteDocumento(
   documentoId: string,
   workspaceId: string
