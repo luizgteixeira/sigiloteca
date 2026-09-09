@@ -37,8 +37,8 @@ yarn-error.log*
 # vercel
 .vercel
 
-# claude code (config pessoal, não do time)
-.claude/settings.local.json
+# claude code
+.claude/
 
 # vscode (preferências pessoais do editor)
 .vscode/
