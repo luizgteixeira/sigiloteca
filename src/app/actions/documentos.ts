@@ -231,7 +231,9 @@ export async function updateOficioConteudo(
   const supabase = await createClient();
   const { data: documento, error: documentoError } = await supabase
     .from('documento')
-    .select('titulo, storage_path, categoria, is_modelo_padrao')
+    .select(
+      'titulo, storage_path, categoria, is_modelo_padrao, retention_until, legal_hold'
+    )
     .eq('id', input.documentoId)
     .eq('workspace_id', input.workspaceId)
     .maybeSingle();
@@ -244,6 +246,20 @@ export async function updateOficioConteudo(
   }
   if (documento.categoria !== 'oficios' || documento.is_modelo_padrao) {
     return { error: 'Este documento não pode ser editado por aqui.' };
+  }
+  if (documento.legal_hold) {
+    return {
+      error:
+        'Este documento está sob preservação especial (legal hold) e não pode ser alterado.',
+    };
+  }
+  if (
+    documento.retention_until &&
+    new Date(documento.retention_until).getTime() > Date.now()
+  ) {
+    return {
+      error: `Este documento está retido até ${new Date(documento.retention_until).toLocaleDateString('pt-BR')} e não pode ser alterado.`,
+    };
   }
 
   const { error: uploadError } = await supabase.storage
