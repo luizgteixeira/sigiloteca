@@ -18,6 +18,8 @@ Toda a decisão de arquitetura e o histórico de negociação vivem no cofre do 
   - `Index.md` — visão geral do projeto
   - `ADRs\ADR-001 - Escritorio Virtual.md` — **decisão de arquitetura completa** (contexto, opções consideradas, modelo de dados, stack, consequências, checklist de ação)
   - `Proposta Comercial.md` — orçamento fechado com a cliente (R$ 4.641–7.182, tarifa amiga + 15% desconto)
+  - `Posicionamento e Concorrência.md` — análise de concorrentes (Projuris ADV, LegalIntellect) e posicionamento pra ir a mercado
+  - `Análise Jurídica - Retenção, LGPD e Sigilo Profissional (Angela).md` — análise jurídica completa sobre prescrição, retenção documental, LGPD e sigilo profissional, recebida da cliente; base para a futura Política de Retenção/Descarte e Matriz Jurídica de Retenção
 
 Leia o ADR-001 antes de tomar qualquer decisão técnica nova — ele já resolveu vários trade-offs (por quê Next.js + Supabase, por quê dois provedores de storage, etc.) e não faz sentido reabrir essas discussões sem motivo novo.
 
