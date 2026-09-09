@@ -1,0 +1,29 @@
+name: Espelhar para sigiloteca (público)
+
+# Toda vez que a branch main deste repositório (sigiloteca-prod) recebe um
+# push, empurra o mesmo conteúdo para luizgteixeira/sigiloteca — o
+# repositório público usado como vitrine de portfólio, já que este aqui
+# (a fonte real de deploy em produção) é privado.
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout com histórico completo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # Evita que a credencial padrão do checkout (GITHUB_TOKEN, sem acesso
+          # a sigiloteca) sobreponha o token que usamos no push abaixo.
+          persist-credentials: false
+
+      - name: Push para sigiloteca
+        env:
+          TOKEN: ${{ secrets.PUBLIC_MIRROR_TOKEN }}
+        run: |
+          git push "https://x-access-token:${TOKEN}@github.com/luizgteixeira/sigiloteca.git" HEAD:main
