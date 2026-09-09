@@ -14,16 +14,16 @@ jobs:
   mirror:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout com histórico completo
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          # Evita que a credencial padrão do checkout (GITHUB_TOKEN, sem acesso
-          # a sigiloteca) sobreponha o token que usamos no push abaixo.
-          persist-credentials: false
 
-      - name: Push para sigiloteca
+      - name: Espelhar para sigiloteca (sem .github, que é só deste repositório)
+        run: |
+          rm -rf .github
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Mirror de sigiloteca-prod@${GITHUB_SHA}" --allow-empty
+          git push "https://x-access-token:${TOKEN}@github.com/luizgteixeira/sigiloteca.git" HEAD:main --force
         env:
           TOKEN: ${{ secrets.PUBLIC_MIRROR_TOKEN }}
-        run: |
-          git push "https://x-access-token:${TOKEN}@github.com/luizgteixeira/sigiloteca.git" HEAD:main
