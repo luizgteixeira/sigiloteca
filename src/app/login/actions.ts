@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { logAuditEvent } from "@/app/actions/audit";
 
 export async function signIn(formData: FormData) {
   const email = String(formData.get("email") ?? "");
@@ -14,5 +15,6 @@ export async function signIn(formData: FormData) {
     redirect("/login?error=1");
   }
 
+  await logAuditEvent("login");
   redirect("/");
 }

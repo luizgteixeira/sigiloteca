@@ -40,7 +40,7 @@ export default async function Home({
   let query = supabase
     .from('documento')
     .select(
-      'id, titulo, categoria, cliente, processo, tags, storage_path, created_at, is_modelo_padrao'
+      'id, titulo, categoria, cliente, processo, tags, storage_path, created_at, is_modelo_padrao, retention_until, legal_hold'
     )
     .eq('workspace_id', workspace.id)
     .order('created_at', { ascending: false })
@@ -97,6 +97,8 @@ export default async function Home({
     created_at: doc.created_at,
     signedUrl: urlByPath.get(doc.storage_path) ?? null,
     isModeloPadrao: doc.is_modelo_padrao,
+    retentionUntil: doc.retention_until,
+    legalHold: doc.legal_hold,
   }));
 
   return (

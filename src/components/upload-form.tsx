@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { createDocumento } from '@/app/actions/documentos';
+import { RETENTION_BASIS_OPTIONS } from '@/lib/retention';
 import { ClienteCombobox, type ClienteOption } from './cliente-combobox';
 
 const CATEGORIAS = [
@@ -87,6 +88,8 @@ export function UploadForm({
     const area = String(formData.get('area') ?? '').trim();
     const isModeloPadrao = formData.get('isModeloPadrao') === 'on';
     const retentionUntil = String(formData.get('retentionUntil') ?? '');
+    const retentionBasis = String(formData.get('retentionBasis') ?? '');
+    const legalHold = formData.get('legalHold') === 'on';
     const tagsRaw = String(formData.get('tags') ?? '');
     const tags = tagsRaw
       .split(',')
@@ -103,6 +106,12 @@ export function UploadForm({
     }
     if (!categoria) {
       setErrorMsg('Selecione uma categoria.');
+      return;
+    }
+    if (retentionUntil && !retentionBasis) {
+      setErrorMsg(
+        'Reter até uma data exige informar o fundamento jurídico da retenção.'
+      );
       return;
     }
 
@@ -133,6 +142,8 @@ export function UploadForm({
         storagePath,
         isModeloPadrao,
         retentionUntil,
+        retentionBasis,
+        legalHold,
       });
 
       if (result.error) {
@@ -264,6 +275,37 @@ export function UploadForm({
             className="rounded-md border border-line bg-surface-2 px-3 py-2 font-body text-sm text-ink"
           />
         </div>
+
+        <div className="flex flex-col gap-1">
+          <label
+            htmlFor="retentionBasis"
+            className="font-mono text-xs uppercase tracking-wide text-ink-muted"
+          >
+            Fundamento da retenção (se houver data)
+          </label>
+          <select
+            id="retentionBasis"
+            name="retentionBasis"
+            defaultValue=""
+            className="rounded-md border border-line bg-surface-2 px-3 py-2 font-body text-sm text-ink"
+          >
+            <option value="">Sem fundamento (sem data de retenção)</option>
+            {RETENTION_BASIS_OPTIONS.map((basis) => (
+              <option key={basis.value} value={basis.value}>
+                {basis.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <label className="flex items-center gap-2 self-end pb-2 font-body text-sm text-ink-muted sm:col-span-2">
+          <input
+            name="legalHold"
+            type="checkbox"
+            className="size-4 accent-accent"
+          />
+          Preservação especial (legal hold) — bloqueia exclusão mesmo sem data de retenção
+        </label>
 
         <div className="flex flex-col gap-1">
           <label

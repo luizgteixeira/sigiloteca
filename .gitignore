@@ -37,6 +37,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# supabase CLI (cache local, ex: `npx supabase --version`)
+/supabase/.temp/
+
 # claude code
 .claude/
 

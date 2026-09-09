@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createOficioFromModelo } from '@/app/actions/documentos';
+import { RETENTION_BASIS_OPTIONS } from '@/lib/retention';
 import { ClienteCombobox, type ClienteOption } from './cliente-combobox';
 
 export function NewOficioForm({
@@ -27,6 +28,16 @@ export function NewOficioForm({
       .split(',')
       .map((tag) => tag.trim())
       .filter(Boolean);
+    const retentionUntil = String(formData.get('retentionUntil') ?? '');
+    const retentionBasis = String(formData.get('retentionBasis') ?? '');
+    const legalHold = formData.get('legalHold') === 'on';
+
+    if (retentionUntil && !retentionBasis) {
+      setErrorMsg(
+        'Reter até uma data exige informar o fundamento jurídico da retenção.'
+      );
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -37,7 +48,9 @@ export function NewOficioForm({
         processo: String(formData.get('processo') ?? ''),
         area: String(formData.get('area') ?? ''),
         tags,
-        retentionUntil: String(formData.get('retentionUntil') ?? ''),
+        retentionUntil,
+        retentionBasis,
+        legalHold,
       });
 
       if (result.error !== null) {
@@ -116,6 +129,29 @@ export function NewOficioForm({
             type="date"
             className="rounded-md border border-line bg-surface-2 px-3 py-2 font-body text-sm normal-case tracking-normal text-ink"
           />
+        </label>
+        <label className="flex flex-col gap-1 font-mono text-xs uppercase tracking-wide text-ink-muted">
+          Fundamento da retenção (se houver data)
+          <select
+            name="retentionBasis"
+            defaultValue=""
+            className="rounded-md border border-line bg-surface-2 px-3 py-2 font-body text-sm normal-case tracking-normal text-ink"
+          >
+            <option value="">Sem fundamento (sem data de retenção)</option>
+            {RETENTION_BASIS_OPTIONS.map((basis) => (
+              <option key={basis.value} value={basis.value}>
+                {basis.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex items-center gap-2 font-body text-sm normal-case tracking-normal text-ink-muted sm:col-span-2">
+          <input
+            name="legalHold"
+            type="checkbox"
+            className="size-4 accent-accent"
+          />
+          Preservação especial (legal hold) — bloqueia exclusão mesmo sem data de retenção
         </label>
       </div>
 

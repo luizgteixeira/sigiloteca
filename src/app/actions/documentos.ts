@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { logAuditEvent } from './audit';
 
 // Server Actions que lançam Error têm a mensagem escondida pelo Next.js em
 // produção (React error #441, "omitted in production builds"). Por isso
@@ -47,11 +48,20 @@ export type CreateDocumentoInput = {
   storagePath: string;
   isModeloPadrao?: boolean;
   retentionUntil?: string;
+  retentionBasis?: string;
+  legalHold?: boolean;
 };
 
 export async function createDocumento(
   input: CreateDocumentoInput
 ): Promise<ActionResult> {
+  if (input.retentionUntil && !input.retentionBasis) {
+    return {
+      error:
+        'Reter até uma data exige informar o fundamento jurídico da retenção.',
+    };
+  }
+
   const supabase = await createClient();
 
   const { nome: clienteNome, error: clienteError } =
@@ -74,6 +84,8 @@ export async function createDocumento(
       input.categoria === 'oficios' && input.isModeloPadrao === true,
     retention_until: input.retentionUntil || null,
     retention_policy: input.retentionUntil ? 'fixed_date' : 'manual',
+    retention_basis: input.retentionBasis || null,
+    legal_hold: input.legalHold === true,
     storage_provider: 'supabase',
     storage_path: input.storagePath,
   });
@@ -81,6 +93,12 @@ export async function createDocumento(
   if (error) {
     return { error: error.message };
   }
+
+  await logAuditEvent('document_create', {
+    resourceType: 'documento',
+    resourceId: input.id,
+    metadata: { categoria: input.categoria, titulo: input.titulo },
+  });
 
   revalidatePath('/');
   return { error: null };
@@ -94,6 +112,8 @@ export type CreateOficioFromModeloInput = {
   area?: string;
   tags?: string[];
   retentionUntil?: string;
+  retentionBasis?: string;
+  legalHold?: boolean;
 };
 
 export async function createOficioFromModelo(
@@ -102,6 +122,12 @@ export async function createOficioFromModelo(
   const titulo = input.titulo.trim();
   if (!titulo) {
     return { error: 'Título é obrigatório.' };
+  }
+  if (input.retentionUntil && !input.retentionBasis) {
+    return {
+      error:
+        'Reter até uma data exige informar o fundamento jurídico da retenção.',
+    };
   }
 
   const supabase = await createClient();
@@ -152,6 +178,8 @@ export async function createOficioFromModelo(
     is_modelo_padrao: false,
     retention_until: input.retentionUntil || null,
     retention_policy: input.retentionUntil ? 'fixed_date' : 'manual',
+    retention_basis: input.retentionBasis || null,
+    legal_hold: input.legalHold === true,
     storage_provider: 'supabase',
     storage_path: storagePath,
   });
@@ -175,6 +203,12 @@ export async function createOficioFromModelo(
     await supabase.storage.from('documentos').remove([storagePath]);
     return { error: versaoError.message };
   }
+
+  await logAuditEvent('document_create', {
+    resourceType: 'documento',
+    resourceId: documentoId,
+    metadata: { categoria: 'oficios', titulo },
+  });
 
   revalidatePath('/');
   return { error: null, documentoId };
@@ -248,6 +282,11 @@ export async function updateOficioConteudo(
     return { error: versaoError.message };
   }
 
+  await logAuditEvent('document_update', {
+    resourceType: 'documento',
+    resourceId: input.documentoId,
+  });
+
   revalidatePath('/');
   revalidatePath(`/documentos/${input.documentoId}/editar`);
   return { error: null };
@@ -260,7 +299,7 @@ export async function deleteDocumento(
   const supabase = await createClient();
   const { data: documento, error: documentoError } = await supabase
     .from('documento')
-    .select('id, storage_path, retention_until')
+    .select('id, storage_path, retention_until, legal_hold')
     .eq('id', documentoId)
     .eq('workspace_id', workspaceId)
     .maybeSingle();
@@ -270,6 +309,12 @@ export async function deleteDocumento(
   }
   if (!documento) {
     return { error: 'Documento não encontrado.' };
+  }
+  if (documento.legal_hold) {
+    return {
+      error:
+        'Este documento está sob preservação especial (legal hold) e não pode ser excluído pela aplicação.',
+    };
   }
   if (
     documento.retention_until &&
@@ -312,6 +357,12 @@ export async function deleteDocumento(
   if (deleteError) {
     return { error: deleteError.message };
   }
+
+  await logAuditEvent('document_delete', {
+    resourceType: 'documento',
+    resourceId: documento.id,
+    metadata: { storage_path: documento.storage_path },
+  });
 
   revalidatePath('/');
   return { error: null };

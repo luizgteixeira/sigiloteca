@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { logAuditEvent } from '@/app/actions/audit';
 
 const TIMEOUT_MS = 2 * 60 * 60 * 1000;
 const WARNING_MS = 60 * 1000;
@@ -46,6 +47,7 @@ export function InactivityGuard() {
 
       if (decorrido >= TIMEOUT_MS) {
         clearInterval(interval);
+        await logAuditEvent('logout', { metadata: { motivo: 'inatividade' } });
         const supabase = createClient();
         await supabase.auth.signOut();
         router.push('/login?motivo=inatividade');

@@ -23,7 +23,22 @@ export type DocumentoRow = {
   created_at: string;
   signedUrl: string | null;
   isModeloPadrao: boolean;
+  retentionUntil: string | null;
+  legalHold: boolean;
 };
+
+function motivoBloqueio(documento: DocumentoRow): string | null {
+  if (documento.legalHold) {
+    return 'Este documento está sob preservação especial (legal hold) e não pode ser excluído.';
+  }
+  if (
+    documento.retentionUntil &&
+    new Date(documento.retentionUntil).getTime() > Date.now()
+  ) {
+    return `Este documento está retido até ${new Date(documento.retentionUntil).toLocaleDateString('pt-BR')} e não pode ser excluído.`;
+  }
+  return null;
+}
 
 export function DocumentList({
   documentos,
@@ -39,6 +54,12 @@ export function DocumentList({
   const [confirmacao, setConfirmacao] = useState('');
 
   async function handleDelete(documento: DocumentoRow) {
+    const bloqueio = motivoBloqueio(documento);
+    if (bloqueio) {
+      setErrorMsg(bloqueio);
+      setDocumentoPendente(null);
+      return;
+    }
     setErrorMsg(null);
     setConfirmacao('');
     setDocumentoPendente(documento);
@@ -79,6 +100,19 @@ export function DocumentList({
         arquivo, o registro da base de dados e todo o histórico de versões. Essa
         ação é permanente e não pode ser desfeita.
       </aside>
+      {!documentoPendente && errorMsg && (
+        <p className="flex items-start justify-between gap-3 rounded-md bg-danger-soft px-3 py-2 font-body text-sm font-semibold text-danger">
+          <span>{errorMsg}</span>
+          <button
+            type="button"
+            onClick={() => setErrorMsg(null)}
+            aria-label="Fechar aviso"
+            className="shrink-0 leading-none text-danger/70 hover:text-danger"
+          >
+            ×
+          </button>
+        </p>
+      )}
       <div className="overflow-x-auto rounded-lg border border-line bg-surface">
         <table className="w-full min-w-[640px] font-body text-sm">
           <thead>

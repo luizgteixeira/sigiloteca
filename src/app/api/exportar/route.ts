@@ -1,6 +1,7 @@
 import { zipSync, strToU8 } from 'fflate';
 import { createClient } from '@/lib/supabase/server';
 import { getOrCreateWorkspace } from '@/lib/workspace';
+import { logAuditEvent } from '@/app/actions/audit';
 
 export const runtime = 'nodejs';
 
@@ -107,6 +108,10 @@ export async function GET() {
 
   const archive = zipSync(entries, { level: 6 });
   const date = new Date().toISOString().slice(0, 10);
+
+  await logAuditEvent('document_export', {
+    metadata: { quantidade: manifest.length },
+  });
 
   return new Response(archive, {
     headers: {
