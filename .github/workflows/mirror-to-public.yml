@@ -16,6 +16,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Evita que a credencial padrão do checkout (GITHUB_TOKEN, sem acesso
+          # a sigiloteca) sobreponha o token que usamos no push abaixo.
+          persist-credentials: false
 
       - name: Espelhar para sigiloteca (sem .github, que é só deste repositório)
         run: |
