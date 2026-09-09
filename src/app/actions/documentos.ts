@@ -231,7 +231,7 @@ export async function updateOficioConteudo(
   const supabase = await createClient();
   const { data: documento, error: documentoError } = await supabase
     .from('documento')
-    .select('storage_path, categoria, is_modelo_padrao')
+    .select('titulo, storage_path, categoria, is_modelo_padrao')
     .eq('id', input.documentoId)
     .eq('workspace_id', input.workspaceId)
     .maybeSingle();
@@ -285,6 +285,7 @@ export async function updateOficioConteudo(
   await logAuditEvent('document_update', {
     resourceType: 'documento',
     resourceId: input.documentoId,
+    metadata: { categoria: documento.categoria, titulo: documento.titulo },
   });
 
   revalidatePath('/');
@@ -299,7 +300,7 @@ export async function deleteDocumento(
   const supabase = await createClient();
   const { data: documento, error: documentoError } = await supabase
     .from('documento')
-    .select('id, storage_path, retention_until, legal_hold')
+    .select('id, titulo, categoria, storage_path, retention_until, legal_hold')
     .eq('id', documentoId)
     .eq('workspace_id', workspaceId)
     .maybeSingle();
@@ -361,7 +362,7 @@ export async function deleteDocumento(
   await logAuditEvent('document_delete', {
     resourceType: 'documento',
     resourceId: documento.id,
-    metadata: { storage_path: documento.storage_path },
+    metadata: { categoria: documento.categoria, titulo: documento.titulo },
   });
 
   revalidatePath('/');

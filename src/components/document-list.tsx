@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { deleteDocumento } from '@/app/actions/documentos';
 
-const CATEGORIA_LABELS: Record<string, string> = {
+export const CATEGORIA_LABELS: Record<string, string> = {
   peticoes: 'Petições',
   modelos_contrato: 'Modelos de Contrato',
   decisoes_judiciais: 'Decisões Judiciais',

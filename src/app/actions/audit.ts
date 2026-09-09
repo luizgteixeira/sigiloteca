@@ -43,6 +43,7 @@ export async function logAuditEvent(
     await supabase.from('audit_log').insert({
       workspace_id: workspace.id,
       user_id: user.id,
+      user_email: user.email ?? null,
       action,
       resource_type: options?.resourceType ?? null,
       resource_id: options?.resourceId ?? null,
