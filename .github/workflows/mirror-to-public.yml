@@ -17,6 +17,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           # Evita que a credencial padrão do checkout (GITHUB_TOKEN, sem acesso
           # a sigiloteca) sobreponha o token que usamos no push abaixo.
           persist-credentials: false
