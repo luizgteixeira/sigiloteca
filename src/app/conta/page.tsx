@@ -1,23 +1,19 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { signOutAllSessions, updatePassword } from './actions';
-import { PasswordField } from '@/components/password-field';
+import { signOutAllSessions } from './actions';
+import { ChangePasswordForm } from '@/components/change-password-form';
 import { MfaManager } from '@/components/mfa-manager';
 
 const ERROR_MESSAGES: Record<string, string> = {
-  atual: 'Senha atual incorreta.',
-  confirmacao: 'A confirmação não bate com a nova senha.',
-  curta: 'A nova senha precisa ter pelo menos 8 caracteres.',
-  servidor: 'Não foi possível trocar a senha. Tente novamente.',
   sessoes: 'Não foi possível encerrar as sessões. Tente novamente.',
 };
 
 export default async function ContaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ erro?: string; sucesso?: string }>;
+  searchParams: Promise<{ erro?: string }>;
 }) {
-  const { erro, sucesso } = await searchParams;
+  const { erro } = await searchParams;
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-4 py-8">
@@ -32,10 +28,10 @@ export default async function ContaPage({
           />
           <div>
             <p className="font-display text-xl font-semibold text-ink">
-              Alterar senha
+              Sua conta
             </p>
             <p className="font-body text-sm text-ink-muted">
-              Sua conta · Sigiloteca
+              Senha, autenticação e sessões · Sigiloteca
             </p>
           </div>
         </div>
@@ -47,74 +43,7 @@ export default async function ContaPage({
         </Link>
       </header>
 
-      <form
-        action={updatePassword}
-        className="flex max-w-sm flex-col gap-4 rounded-lg border border-line bg-surface p-6"
-      >
-        {erro && (
-          <p className="rounded-md bg-danger-soft px-3 py-2 font-body text-sm text-danger">
-            {ERROR_MESSAGES[erro] ?? 'Não foi possível trocar a senha.'}
-          </p>
-        )}
-        {sucesso && (
-          <p className="rounded-md bg-success-soft px-3 py-2 font-body text-sm text-success">
-            Senha alterada com sucesso.
-          </p>
-        )}
-
-        <div className="flex flex-col gap-1">
-          <label
-            htmlFor="senhaAtual"
-            className="font-mono text-xs uppercase tracking-wide text-ink-muted"
-          >
-            Senha atual
-          </label>
-          <PasswordField
-            id="senhaAtual"
-            name="senhaAtual"
-            autoComplete="current-password"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label
-            htmlFor="novaSenha"
-            className="font-mono text-xs uppercase tracking-wide text-ink-muted"
-          >
-            Nova senha
-          </label>
-          <PasswordField
-            id="novaSenha"
-            name="novaSenha"
-            autoComplete="new-password"
-          />
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label
-            htmlFor="confirmarSenha"
-            className="font-mono text-xs uppercase tracking-wide text-ink-muted"
-          >
-            Confirmar nova senha
-          </label>
-          <PasswordField
-            id="confirmarSenha"
-            name="confirmarSenha"
-            autoComplete="new-password"
-          />
-        </div>
-
-        <p className="font-body text-xs text-ink-muted">
-          Mínimo de 8 caracteres.
-        </p>
-
-        <button
-          type="submit"
-          className="mt-2 self-start rounded-md bg-accent px-4 py-2 font-body font-medium text-surface transition-colors hover:bg-accent/85"
-        >
-          Salvar nova senha
-        </button>
-      </form>
+      <ChangePasswordForm />
 
       <MfaManager />
 
@@ -122,6 +51,11 @@ export default async function ContaPage({
         <p className="font-body text-sm font-medium text-ink">
           Sessões ativas
         </p>
+        {erro && (
+          <p className="rounded-md bg-danger-soft px-3 py-2 font-body text-sm text-danger">
+            {ERROR_MESSAGES[erro] ?? 'Não foi possível encerrar as sessões.'}
+          </p>
+        )}
         <p className="font-body text-xs text-ink-muted">
           Encerra o acesso em qualquer outro dispositivo ou navegador onde sua
           conta esteja logada, inclusive este. Você vai precisar entrar de

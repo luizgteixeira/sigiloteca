@@ -3,17 +3,30 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { logAuditEvent } from '@/app/actions/audit';
+import { senhaAtendeRequisitos } from '@/lib/password';
 
-export async function updatePassword(formData: FormData) {
+export type UpdatePasswordState = {
+  erro?: 'atual' | 'confirmacao' | 'fraca' | 'servidor';
+  sucesso?: boolean;
+  // Só muda (e limpa os campos) quando a troca dá certo — um erro devolve o
+  // mesmo valor, o que mantém tudo que o usuário já tinha digitado na tela
+  // em vez de forçar ele a redigitar tudo de novo por causa de um campo só.
+  resetToken: number;
+};
+
+export async function updatePassword(
+  state: UpdatePasswordState,
+  formData: FormData
+): Promise<UpdatePasswordState> {
   const senhaAtual = String(formData.get('senhaAtual') ?? '');
   const novaSenha = String(formData.get('novaSenha') ?? '');
   const confirmarSenha = String(formData.get('confirmarSenha') ?? '');
 
-  if (novaSenha.length < 8) {
-    redirect('/conta?erro=curta');
+  if (!senhaAtendeRequisitos(novaSenha)) {
+    return { erro: 'fraca', resetToken: state.resetToken };
   }
   if (novaSenha !== confirmarSenha) {
-    redirect('/conta?erro=confirmacao');
+    return { erro: 'confirmacao', resetToken: state.resetToken };
   }
 
   const supabase = await createClient();
@@ -33,7 +46,7 @@ export async function updatePassword(formData: FormData) {
   });
 
   if (reauthError) {
-    redirect('/conta?erro=atual');
+    return { erro: 'atual', resetToken: state.resetToken };
   }
 
   const { error: updateError } = await supabase.auth.updateUser({
@@ -41,10 +54,10 @@ export async function updatePassword(formData: FormData) {
   });
 
   if (updateError) {
-    redirect('/conta?erro=servidor');
+    return { erro: 'servidor', resetToken: state.resetToken };
   }
 
-  redirect('/conta?sucesso=1');
+  return { sucesso: true, resetToken: state.resetToken + 1 };
 }
 
 // Revoga todos os refresh tokens do usuário (scope: 'global') — encerra

@@ -31,8 +31,11 @@ export async function updateSession(request: NextRequest) {
 
   const isLoginRoute = request.nextUrl.pathname === "/login";
   const isMfaRoute = request.nextUrl.pathname === "/login/mfa";
+  // Alvo dos links de convite/recuperação por e-mail — roda sem sessão
+  // prévia, é ele que cria a sessão via verifyOtp().
+  const isAuthConfirmRoute = request.nextUrl.pathname === "/auth/confirm";
 
-  if (!user && !isLoginRoute) {
+  if (!user && !isLoginRoute && !isAuthConfirmRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);

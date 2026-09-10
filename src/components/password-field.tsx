@@ -6,10 +6,12 @@ export function PasswordField({
   id = 'password',
   name = 'password',
   autoComplete = 'current-password',
+  onValueChange,
 }: {
   id?: string;
   name?: string;
   autoComplete?: string;
+  onValueChange?: (value: string) => void;
 }) {
   const [visible, setVisible] = useState(false);
   const [password, setPassword] = useState('');
@@ -23,7 +25,10 @@ export function PasswordField({
         required
         autoComplete={autoComplete}
         value={password}
-        onChange={(event) => setPassword(event.target.value)}
+        onChange={(event) => {
+          setPassword(event.target.value);
+          onValueChange?.(event.target.value);
+        }}
         className="w-full rounded-md border border-line bg-surface-2 px-3 py-2 pr-24 font-body text-ink"
       />
       <button
