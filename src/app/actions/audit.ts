@@ -11,6 +11,7 @@ export type AuditAction =
   | 'document_delete'
   | 'document_export'
   | 'document_metadata_update'
+  | 'document_anonymize'
   | 'client_create'
   | 'client_update'
   | 'client_delete';

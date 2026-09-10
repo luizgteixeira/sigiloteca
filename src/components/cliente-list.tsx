@@ -29,6 +29,7 @@ export function ClienteList({
   const [excluindo, setExcluindo] = useState<ClienteRow | null>(null);
   const [deleteErrorMsg, setDeleteErrorMsg] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmacaoExclusao, setConfirmacaoExclusao] = useState('');
 
   async function handleSalvarEdicao(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -65,7 +66,7 @@ export function ClienteList({
   }
 
   async function confirmarExclusao() {
-    if (!excluindo) return;
+    if (!excluindo || confirmacaoExclusao !== 'EXCLUIR') return;
     setDeleteErrorMsg(null);
     setDeletingId(excluindo.id);
     try {
@@ -75,6 +76,7 @@ export function ClienteList({
         return;
       }
       setExcluindo(null);
+      setConfirmacaoExclusao('');
       router.refresh();
     } catch (err) {
       setDeleteErrorMsg(
@@ -149,6 +151,7 @@ export function ClienteList({
                       type="button"
                       onClick={() => {
                         setDeleteErrorMsg(null);
+                        setConfirmacaoExclusao('');
                         setExcluindo(cliente);
                       }}
                       className="font-body text-sm font-medium text-danger underline transition-colors hover:text-ink"
@@ -258,32 +261,52 @@ export function ClienteList({
           aria-labelledby="excluir-cliente-title"
           className="fixed inset-0 z-10 flex items-center justify-center bg-ink/50 px-4"
         >
-          <div className="w-full max-w-lg rounded-lg border border-line bg-surface p-6 shadow-xl">
+          <div className="w-full max-w-lg rounded-lg border border-danger bg-surface p-6 shadow-xl">
             <h2
               id="excluir-cliente-title"
-              className="font-display text-xl font-semibold text-ink"
+              className="font-display text-xl font-semibold text-danger"
             >
-              Excluir cliente
+              Exclusão permanente
             </h2>
             <div className="mt-4 flex flex-col gap-3 font-body text-sm text-ink">
               <p>
                 Você está prestes a excluir o cliente{' '}
                 <strong>{excluindo.nome}</strong>.
               </p>
-              {excluindo.documentosVinculados > 0 && (
-                <p className="rounded-md bg-warning-soft px-3 py-2 text-ink">
-                  Este cliente está vinculado a{' '}
-                  <strong>{excluindo.documentosVinculados}</strong>{' '}
-                  documento
-                  {excluindo.documentosVinculados > 1 ? 's' : ''}. O nome
-                  permanece salvo neles, mas o vínculo será removido.
+              <p className="font-semibold text-danger">
+                Aviso 1: nome, endereço, e-mail, celular e CPF deste cliente
+                serão apagados permanentemente do cadastro.
+              </p>
+              {excluindo.documentosVinculados > 0 ? (
+                <p className="font-semibold text-danger">
+                  Aviso 2: este cliente está vinculado a{' '}
+                  {excluindo.documentosVinculados} documento
+                  {excluindo.documentosVinculados > 1 ? 's' : ''}. Os
+                  documentos NÃO são apagados — o nome permanece salvo
+                  neles, só o vínculo com o cadastro do cliente é removido.
+                </p>
+              ) : (
+                <p className="text-ink-muted">
+                  Este cliente não está vinculado a nenhum documento.
                 </p>
               )}
+              <p>Essa operação não pode ser desfeita.</p>
               {deleteErrorMsg && (
                 <p className="rounded-md bg-danger-soft px-3 py-2 font-semibold text-danger">
                   {deleteErrorMsg}
                 </p>
               )}
+              <label className="flex flex-col gap-1 font-mono text-xs uppercase tracking-wide text-ink-muted">
+                Digite EXCLUIR para confirmar
+                <input
+                  value={confirmacaoExclusao}
+                  onChange={(event) =>
+                    setConfirmacaoExclusao(event.target.value)
+                  }
+                  autoFocus
+                  className="rounded-md border border-line bg-surface-2 px-3 py-2 font-body text-sm normal-case tracking-normal text-ink"
+                />
+              </label>
             </div>
             <div className="mt-5 flex justify-end gap-3">
               <button
@@ -295,11 +318,16 @@ export function ClienteList({
               </button>
               <button
                 type="button"
-                disabled={deletingId === excluindo.id}
+                disabled={
+                  confirmacaoExclusao !== 'EXCLUIR' ||
+                  deletingId === excluindo.id
+                }
                 onClick={confirmarExclusao}
-                className="rounded-md bg-danger px-3 py-2 font-body text-sm font-semibold text-surface transition-colors hover:bg-danger/85 disabled:opacity-50"
+                className="rounded-md bg-danger px-3 py-2 font-body text-sm font-semibold text-surface transition-colors hover:bg-danger/85 disabled:opacity-50 disabled:hover:bg-danger"
               >
-                {deletingId === excluindo.id ? 'Excluindo...' : 'Excluir'}
+                {deletingId === excluindo.id
+                  ? 'Excluindo...'
+                  : 'Excluir definitivamente'}
               </button>
             </div>
           </div>

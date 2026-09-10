@@ -40,7 +40,7 @@ export default async function Home({
   let query = supabase
     .from('documento')
     .select(
-      'id, titulo, categoria, cliente, processo, tags, storage_path, created_at, is_modelo_padrao, retention_until, legal_hold'
+      'id, titulo, categoria, cliente, processo, tags, storage_path, created_at, is_modelo_padrao, retention_until, legal_hold, anonymized'
     )
     .eq('workspace_id', workspace.id)
     .order('created_at', { ascending: false })
@@ -66,7 +66,12 @@ export default async function Home({
     .order('nome');
   const clientes = clientesRows ?? [];
 
-  const paths = rows.map((doc) => doc.storage_path);
+  // Documento anonimizado não tem mais arquivo — nem tenta gerar link (e um
+  // path já apagado no meio do lote derrubaria createSignedUrls pra todo
+  // mundo, já que o catch abaixo zera a lista inteira).
+  const paths = rows
+    .filter((doc) => !doc.anonymized)
+    .map((doc) => doc.storage_path);
   let signedUrls: { signedUrl: string | null; path: string | null }[] = [];
   if (paths.length) {
     try {
@@ -99,6 +104,7 @@ export default async function Home({
     isModeloPadrao: doc.is_modelo_padrao,
     retentionUntil: doc.retention_until,
     legalHold: doc.legal_hold,
+    anonymized: doc.anonymized,
   }));
 
   return (

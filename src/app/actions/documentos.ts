@@ -437,6 +437,111 @@ export async function updateDocumentoMetadata(
   return { error: null };
 }
 
+// Anonimização (item §49 nº 17): ação manual e irreversível — apaga o
+// arquivo original (e todo o histórico de versões) do Storage e limpa
+// cliente/processo/área/tags do registro, que continua existindo como dado
+// anonimizado de uso do próprio controlador (LGPD art. 16, IV). Diferente de
+// deleteDocumento, o registro em si não é apagado, só perde o vínculo com a
+// pessoa identificada. Mesmas guardas de legal_hold/retenção que já
+// protegem a exclusão — destruir o arquivo original de um documento retido
+// contradiz o propósito da retenção enquanto ela estiver ativa.
+export async function anonymizeDocumento(
+  documentoId: string,
+  workspaceId: string
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const { data: documento, error: documentoError } = await supabase
+    .from('documento')
+    .select(
+      'id, titulo, categoria, storage_path, retention_until, legal_hold, anonymized'
+    )
+    .eq('id', documentoId)
+    .eq('workspace_id', workspaceId)
+    .maybeSingle();
+
+  if (documentoError) {
+    return { error: documentoError.message };
+  }
+  if (!documento) {
+    return { error: 'Documento não encontrado.' };
+  }
+  if (documento.anonymized) {
+    return { error: 'Este documento já está anonimizado.' };
+  }
+  if (documento.legal_hold) {
+    return {
+      error:
+        'Este documento está sob preservação especial (legal hold) e não pode ser anonimizado.',
+    };
+  }
+  if (
+    documento.retention_until &&
+    new Date(documento.retention_until).getTime() > Date.now()
+  ) {
+    return {
+      error: `Este documento está retido até ${new Date(documento.retention_until).toLocaleDateString('pt-BR')}.`,
+    };
+  }
+
+  const { data: versoes, error: versoesError } = await supabase
+    .from('documento_versao')
+    .select('storage_path')
+    .eq('documento_id', documento.id);
+
+  if (versoesError) {
+    return { error: versoesError.message };
+  }
+
+  const paths = Array.from(
+    new Set([
+      documento.storage_path,
+      ...(versoes ?? []).map((versao) => versao.storage_path),
+    ])
+  );
+  const { error: storageError } = await supabase.storage
+    .from('documentos')
+    .remove(paths);
+
+  if (storageError) {
+    return { error: storageError.message };
+  }
+
+  const { error: versaoDeleteError } = await supabase
+    .from('documento_versao')
+    .delete()
+    .eq('documento_id', documento.id);
+
+  if (versaoDeleteError) {
+    return { error: versaoDeleteError.message };
+  }
+
+  const { error: updateError } = await supabase
+    .from('documento')
+    .update({
+      cliente: null,
+      cliente_id: null,
+      processo: null,
+      area: null,
+      tags: [],
+      anonymized: true,
+    })
+    .eq('id', documento.id)
+    .eq('workspace_id', workspaceId);
+
+  if (updateError) {
+    return { error: updateError.message };
+  }
+
+  await logAuditEvent('document_anonymize', {
+    resourceType: 'documento',
+    resourceId: documento.id,
+    metadata: { titulo: documento.titulo, categoria: documento.categoria },
+  });
+
+  revalidatePath('/');
+  return { error: null };
+}
+
 export async function deleteDocumento(
   documentoId: string,
   workspaceId: string
