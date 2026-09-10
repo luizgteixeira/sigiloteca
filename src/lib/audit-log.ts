@@ -8,6 +8,7 @@ export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
   document_update: 'Documento alterado',
   document_delete: 'Documento excluído',
   document_export: 'Exportação de documentos',
+  document_metadata_update: 'Metadados de documento alterados',
   client_create: 'Cliente cadastrado',
   client_update: 'Cliente alterado',
   client_delete: 'Cliente excluído',
@@ -53,6 +54,10 @@ export function describeAuditEvent(row: AuditLogRow): string {
     case 'document_update':
     case 'document_delete':
       return [titulo && `"${titulo}"`, categoria].filter(Boolean).join(' · ') || '—';
+    case 'document_metadata_update': {
+      const diff = alteracoesTexto(metadata);
+      return [titulo && `"${titulo}"`, diff].filter(Boolean).join(' — ') || '—';
+    }
     case 'document_export': {
       const quantidade = metadata.quantidade;
       return typeof quantidade === 'number'

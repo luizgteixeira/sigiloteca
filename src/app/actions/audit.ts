@@ -10,6 +10,7 @@ export type AuditAction =
   | 'document_update'
   | 'document_delete'
   | 'document_export'
+  | 'document_metadata_update'
   | 'client_create'
   | 'client_update'
   | 'client_delete';

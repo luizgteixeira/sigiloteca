@@ -309,6 +309,134 @@ export async function updateOficioConteudo(
   return { error: null };
 }
 
+export type UpdateDocumentoMetadataInput = {
+  documentoId: string;
+  workspaceId: string;
+  titulo: string;
+  categoria: string;
+  clienteId?: string;
+  processo?: string;
+  area?: string;
+  tags: string[];
+};
+
+function camposDiferentes(a: unknown, b: unknown): boolean {
+  if (Array.isArray(a) && Array.isArray(b)) {
+    return a.join(', ') !== b.join(', ');
+  }
+  return (a ?? null) !== (b ?? null);
+}
+
+// Metadados (título/categoria/cliente/processo/área/tags) continuam
+// editáveis mesmo em documento retido ou sob legal hold — só o conteúdo do
+// arquivo fica travado (decisão registrada na Política de Retenção, 8.1).
+// Por isso não repete aqui a checagem de retention_until/legal_hold que
+// updateOficioConteudo/deleteDocumento fazem; em troca, toda alteração tem
+// que gerar log com o antes/depois de cada campo que mudou.
+export async function updateDocumentoMetadata(
+  input: UpdateDocumentoMetadataInput
+): Promise<ActionResult> {
+  const titulo = input.titulo.trim();
+  if (!titulo) {
+    return { error: 'Título é obrigatório.' };
+  }
+
+  const supabase = await createClient();
+  const { data: documento, error: documentoError } = await supabase
+    .from('documento')
+    .select(
+      'titulo, categoria, cliente, processo, area, tags, is_modelo_padrao'
+    )
+    .eq('id', input.documentoId)
+    .eq('workspace_id', input.workspaceId)
+    .maybeSingle();
+
+  if (documentoError) {
+    return { error: documentoError.message };
+  }
+  if (!documento) {
+    return { error: 'Documento não encontrado.' };
+  }
+  if (documento.is_modelo_padrao && input.categoria !== documento.categoria) {
+    return {
+      error: 'Não é possível trocar a categoria do modelo padrão de Ofícios.',
+    };
+  }
+
+  const { nome: clienteNome, error: clienteError } =
+    await resolveClienteNome(supabase, input.workspaceId, input.clienteId);
+  if (clienteError) {
+    return { error: clienteError };
+  }
+
+  const categoria = documento.is_modelo_padrao
+    ? documento.categoria
+    : input.categoria;
+  const processo = input.processo?.trim() || null;
+  const area = input.area?.trim() || null;
+
+  const valoresNovos: Record<string, unknown> = {
+    titulo,
+    categoria,
+    cliente: clienteNome,
+    processo,
+    area,
+    tags: input.tags,
+  };
+  const valoresAntigos: Record<string, unknown> = {
+    titulo: documento.titulo,
+    categoria: documento.categoria,
+    cliente: documento.cliente,
+    processo: documento.processo,
+    area: documento.area,
+    tags: documento.tags ?? [],
+  };
+
+  const alteracoes: Record<string, { de: unknown; para: unknown }> = {};
+  for (const campo of Object.keys(valoresNovos)) {
+    if (camposDiferentes(valoresAntigos[campo], valoresNovos[campo])) {
+      const de = valoresAntigos[campo];
+      const para = valoresNovos[campo];
+      alteracoes[campo] = {
+        de: Array.isArray(de) ? de.join(', ') || null : de,
+        para: Array.isArray(para) ? para.join(', ') || null : para,
+      };
+    }
+  }
+
+  if (Object.keys(alteracoes).length === 0) {
+    return { error: null };
+  }
+
+  const { error: updateError } = await supabase
+    .from('documento')
+    .update({
+      titulo,
+      categoria,
+      cliente: clienteNome,
+      cliente_id: input.clienteId || null,
+      processo,
+      area,
+      tags: input.tags,
+    })
+    .eq('id', input.documentoId)
+    .eq('workspace_id', input.workspaceId);
+
+  if (updateError) {
+    return { error: updateError.message };
+  }
+
+  await logAuditEvent('document_metadata_update', {
+    resourceType: 'documento',
+    resourceId: input.documentoId,
+    metadata: { titulo, categoria, alteracoes },
+  });
+
+  revalidatePath('/');
+  revalidatePath(`/documentos/${input.documentoId}/metadados`);
+  return { error: null };
+}
+
 export async function deleteDocumento(
   documentoId: string,
   workspaceId: string

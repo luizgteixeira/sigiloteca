@@ -162,6 +162,12 @@ export function DocumentList({
                         Editar
                       </Link>
                     ) : null}
+                    <Link
+                      href={`/documentos/${documento.id}/metadados`}
+                      className="font-body text-sm font-medium text-accent underline transition-colors hover:text-ink"
+                    >
+                      Metadados
+                    </Link>
                     {documento.signedUrl ? (
                       <a
                         href={documento.signedUrl}
