@@ -7,6 +7,8 @@ export const runtime = 'nodejs';
 
 const MAX_DOCUMENTS = 500;
 const MAX_TOTAL_BYTES = 500 * 1024 * 1024;
+const MAX_EXPORTS_PER_WINDOW = 10;
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 
 function sanitizePathPart(value: string): string {
   const withoutDiacritics = value
@@ -26,6 +28,29 @@ export async function GET() {
   }
 
   const workspace = await getOrCreateWorkspace(supabase, user.id, user.email);
+
+  // Reaproveita o audit_log (evento document_export já gravado a cada
+  // exportação) em vez de criar uma tabela nova só pra contagem — evita
+  // que o backup completo seja usado como canal de exfiltração em massa.
+  const { count: exportCount } = await supabase
+    .from('audit_log')
+    .select('id', { count: 'exact', head: true })
+    .eq('workspace_id', workspace.id)
+    .eq('action', 'document_export')
+    .gte(
+      'created_at',
+      new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString()
+    );
+
+  if ((exportCount ?? 0) >= MAX_EXPORTS_PER_WINDOW) {
+    return Response.json(
+      {
+        error: `Limite de ${MAX_EXPORTS_PER_WINDOW} exportações por hora atingido. Tente novamente mais tarde.`,
+      },
+      { status: 429 }
+    );
+  }
+
   const { data: documentos, error: documentosError } = await supabase
     .from('documento')
     .select(

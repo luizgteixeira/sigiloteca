@@ -68,7 +68,9 @@ export function describeAuditEvent(row: AuditLogRow): string {
     }
     case 'logout': {
       const motivo = metadata.motivo;
-      return motivo === 'inatividade' ? 'Por inatividade' : '—';
+      if (motivo === 'inatividade') return 'Por inatividade';
+      if (motivo === 'todas_sessoes') return 'Encerrou todas as sessões';
+      return '—';
     }
     case 'login':
       return '—';

@@ -1,13 +1,15 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { updatePassword } from './actions';
+import { signOutAllSessions, updatePassword } from './actions';
 import { PasswordField } from '@/components/password-field';
+import { MfaManager } from '@/components/mfa-manager';
 
 const ERROR_MESSAGES: Record<string, string> = {
   atual: 'Senha atual incorreta.',
   confirmacao: 'A confirmação não bate com a nova senha.',
   curta: 'A nova senha precisa ter pelo menos 8 caracteres.',
   servidor: 'Não foi possível trocar a senha. Tente novamente.',
+  sessoes: 'Não foi possível encerrar as sessões. Tente novamente.',
 };
 
 export default async function ContaPage({
@@ -113,6 +115,27 @@ export default async function ContaPage({
           Salvar nova senha
         </button>
       </form>
+
+      <MfaManager />
+
+      <div className="flex max-w-sm flex-col gap-3 rounded-lg border border-line bg-surface p-6">
+        <p className="font-body text-sm font-medium text-ink">
+          Sessões ativas
+        </p>
+        <p className="font-body text-xs text-ink-muted">
+          Encerra o acesso em qualquer outro dispositivo ou navegador onde sua
+          conta esteja logada, inclusive este. Você vai precisar entrar de
+          novo aqui.
+        </p>
+        <form action={signOutAllSessions}>
+          <button
+            type="submit"
+            className="rounded-md border border-danger px-4 py-2 font-body text-sm font-medium text-danger transition-colors hover:bg-danger-soft"
+          >
+            Encerrar todas as sessões
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

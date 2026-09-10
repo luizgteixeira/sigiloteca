@@ -30,6 +30,7 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const isLoginRoute = request.nextUrl.pathname === "/login";
+  const isMfaRoute = request.nextUrl.pathname === "/login/mfa";
 
   if (!user && !isLoginRoute) {
     const url = request.nextUrl.clone();
@@ -37,10 +38,24 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && isLoginRoute) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/";
-    return NextResponse.redirect(url);
+  if (user) {
+    // Login com senha só abre sessão em aal1; se a conta tem MFA ativado,
+    // toda rota fica bloqueada até o desafio de segundo fator ser cumprido.
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    const precisaMfa =
+      aal?.nextLevel === "aal2" && aal.currentLevel !== aal.nextLevel;
+
+    if (precisaMfa && !isMfaRoute) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login/mfa";
+      return NextResponse.redirect(url);
+    }
+
+    if (!precisaMfa && (isLoginRoute || isMfaRoute)) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/";
+      return NextResponse.redirect(url);
+    }
   }
 
   return supabaseResponse;

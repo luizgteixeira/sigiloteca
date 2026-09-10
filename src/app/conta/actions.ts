@@ -2,6 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { logAuditEvent } from '@/app/actions/audit';
 
 export async function updatePassword(formData: FormData) {
   const senhaAtual = String(formData.get('senhaAtual') ?? '');
@@ -44,4 +45,29 @@ export async function updatePassword(formData: FormData) {
   }
 
   redirect('/conta?sucesso=1');
+}
+
+// Revoga todos os refresh tokens do usuário (scope: 'global') — encerra
+// qualquer sessão aberta em outros dispositivos/navegadores, inclusive a
+// atual, que precisa logar de novo. Útil se a conta foi acessada de um
+// computador compartilhado e a senha já foi trocada, ou em suspeita de
+// sessão indevida.
+export async function signOutAllSessions() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect('/login');
+  }
+
+  await logAuditEvent('logout', { metadata: { motivo: 'todas_sessoes' } });
+
+  const { error } = await supabase.auth.signOut({ scope: 'global' });
+  if (error) {
+    redirect('/conta?erro=sessoes');
+  }
+
+  redirect('/login?motivo=sessoes_encerradas');
 }
