@@ -34,8 +34,16 @@ export async function updateSession(request: NextRequest) {
   // Alvo dos links de convite/recuperação por e-mail — roda sem sessão
   // prévia, é ele que cria a sessão via verifyOtp().
   const isAuthConfirmRoute = request.nextUrl.pathname === "/auth/confirm";
+  // Formulário público de direitos do titular (LGPD art. 18) — quem
+  // preenche não é usuário do Sigiloteca, não faz sentido exigir login.
+  const isTitularesFormRoute = request.nextUrl.pathname === "/titulares";
 
-  if (!user && !isLoginRoute && !isAuthConfirmRoute) {
+  if (
+    !user &&
+    !isLoginRoute &&
+    !isAuthConfirmRoute &&
+    !isTitularesFormRoute
+  ) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);

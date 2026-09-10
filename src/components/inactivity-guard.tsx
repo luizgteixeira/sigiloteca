@@ -20,7 +20,7 @@ const ACTIVITY_EVENTS = [
 export function InactivityGuard() {
   const pathname = usePathname();
   const router = useRouter();
-  const isLoginPage = pathname === '/login';
+  const isPublicPage = pathname === '/login' || pathname === '/titulares';
   const lastActivityRef = useRef(0);
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
 
@@ -34,7 +34,7 @@ export function InactivityGuard() {
   }, [registrarAtividade]);
 
   useEffect(() => {
-    if (isLoginPage) return;
+    if (isPublicPage) return;
 
     lastActivityRef.current = Date.now();
 
@@ -68,9 +68,9 @@ export function InactivityGuard() {
       }
       clearInterval(interval);
     };
-  }, [isLoginPage, registrarAtividade, router]);
+  }, [isPublicPage, registrarAtividade, router]);
 
-  if (isLoginPage || secondsLeft === null) {
+  if (isPublicPage || secondsLeft === null) {
     return null;
   }
 
