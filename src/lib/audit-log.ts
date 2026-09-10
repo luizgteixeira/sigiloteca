@@ -72,7 +72,15 @@ export function describeAuditEvent(row: AuditLogRow): string {
       return nome ? `"${nome}"` : '—';
     case 'client_update': {
       const diff = alteracoesTexto(metadata);
-      return [nome && `"${nome}"`, diff].filter(Boolean).join(' — ') || '—';
+      const documentosAtualizados = metadata.documentosAtualizados;
+      const propagacao =
+        typeof documentosAtualizados === 'number' && documentosAtualizados > 0
+          ? `nome propagado a ${documentosAtualizados} documento${documentosAtualizados === 1 ? '' : 's'}`
+          : null;
+      return (
+        [nome && `"${nome}"`, diff, propagacao].filter(Boolean).join(' — ') ||
+        '—'
+      );
     }
     case 'logout': {
       const motivo = metadata.motivo;

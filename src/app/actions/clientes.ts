@@ -109,13 +109,35 @@ export async function updateCliente(
     }
   }
 
+  // Propaga a correção do nome pros documentos já vinculados — a Angela
+  // confirmou que isso é exigido pelo direito de correção (LGPD art. 18,
+  // III), não basta corrigir só o cadastro do cliente e deixar o nome
+  // antigo "congelado" no documento.cliente (cópia snapshot usada na busca
+  // full-text). Só propaga o nome — os outros campos do cliente não são
+  // copiados em documento.
+  let documentosAtualizados = 0;
+  if (antes && antes.nome !== nome) {
+    const { data: atualizados, error: propagacaoError } = await supabase
+      .from('documento')
+      .update({ cliente: nome })
+      .eq('cliente_id', input.id)
+      .eq('workspace_id', input.workspaceId)
+      .select('id');
+
+    if (propagacaoError) {
+      return { error: propagacaoError.message };
+    }
+    documentosAtualizados = atualizados?.length ?? 0;
+  }
+
   await logAuditEvent('client_update', {
     resourceType: 'cliente',
     resourceId: input.id,
-    metadata: { nome, alteracoes },
+    metadata: { nome, alteracoes, documentosAtualizados },
   });
 
   revalidatePath('/clientes');
+  revalidatePath('/');
   return { error: null };
 }
 
