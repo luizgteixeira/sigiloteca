@@ -1,6 +1,6 @@
 # Sigiloteca
 
-> Sistema de gestão documental para advocacia — começa como ferramenta pessoal (uso individual), com o objetivo de virar produto vendável para outros advogados depois de validado. Nome de trabalho anterior: "Escritório Virtual".
+> Sistema de gestão documental para advocacia — começou como ferramenta pessoal (uso individual) e, em 10/09/2026, a cliente (Angela) autorizou formalmente a comercialização do produto para outros escritórios. Nome de trabalho anterior: "Escritório Virtual".
 
 Desenvolvido por Luiz Gustavo — [luizgustavodev.com](https://luizgustavodev.com/)
 
@@ -12,20 +12,22 @@ Ideia original: "é como se eu entrasse no meu notebook em uma sala secreta" —
 
 ## Documentação de referência (fora deste repositório)
 
-Toda a decisão de arquitetura e o histórico de negociação vivem no cofre do Obsidian, **não** neste repo:
+Toda a decisão de arquitetura, negociação e a análise jurídica de LGPD/sigilo profissional vivem no cofre do Obsidian, **não** neste repo:
 
 - **Cofre**: `C:\Users\Luiz Gustavo\OneDrive\documentos\Escritório Virtual\Escritório Virtual\`
   - `Index.md` — visão geral do projeto
   - `ADRs\ADR-001 - Escritorio Virtual.md` — **decisão de arquitetura completa** (contexto, opções consideradas, modelo de dados, stack, consequências, checklist de ação)
   - `Proposta Comercial.md` — orçamento fechado com a cliente (R$ 4.641–7.182, tarifa amiga + 15% desconto)
   - `Posicionamento e Concorrência.md` — análise de concorrentes (Projuris ADV, LegalIntellect) e posicionamento pra ir a mercado
-  - `Análise Jurídica - Retenção, LGPD e Sigilo Profissional (Angela).md` — análise jurídica completa sobre prescrição, retenção documental, LGPD e sigilo profissional, recebida da cliente; base para a futura Política de Retenção/Descarte e Matriz Jurídica de Retenção
+  - `Análise Jurídica - Retenção, LGPD e Sigilo Profissional (Angela).md` — análise jurídica completa sobre prescrição, retenção documental, LGPD e sigilo profissional, recebida da cliente; base para a Política de Retenção/Descarte, Matriz Jurídica de Retenção e os outros 13 documentos operacionais do checklist §49
+  - `status-execucao-sigiloteca.md` — **status vivo do checklist §49** (o que já foi implementado, o que pode andar sem depender de mais ninguém, e o que ainda espera decisão da Angela)
+  - `Contrato com Escritórios do Sigiloteca (Minuta).md`, `Termos de Uso do Sigiloteca.md`, `Política de Privacidade do Sigiloteca.md`, `Política de Retenção e Descarte do Sigiloteca.md`, `Procedimento de Atendimento aos Titulares do Sigiloteca.md`, `Revisão das Normas da OAB Aplicáveis ao Sigiloteca.md` — os documentos operacionais já refletindo as decisões da Angela
 
-Leia o ADR-001 antes de tomar qualquer decisão técnica nova — ele já resolveu vários trade-offs (por quê Next.js + Supabase, por quê dois provedores de storage, etc.) e não faz sentido reabrir essas discussões sem motivo novo.
+Leia o ADR-001 antes de tomar qualquer decisão técnica nova — ele já resolveu vários trade-offs (por quê Next.js + Supabase, por quê dois provedores de storage, etc.) e não faz sentido reabrir essas discussões sem motivo novo. Leia a Análise Jurídica e o status do checklist §49 antes de mexer em qualquer coisa relacionada a retenção, LGPD ou sigilo profissional.
 
 ## Status: onde parei
 
-Checklist do ADR-001:
+Checklist do ADR-001 (fase inicial, uso individual):
 
 - [x] Validar as categorias iniciais com a cliente
 - [x] Logo aprovado pela cliente (conceito "Pilha Organizada")
@@ -44,10 +46,31 @@ Checklist do ADR-001:
 - [x] Preenchimento de Ofício direto na tela — "Criar e preencher" leva a um editor em tela (contador de campos `[entre colchetes]` pendentes, botão "Salvar Ofício"), sem baixar/reenviar arquivo manualmente
 - [x] Cadastro de clientes (tela `/clientes`: nome, endereço, email, celular, CPF opcional) + combobox de busca nos formulários de documento/Ofício, vinculando por `cliente_id` sem perder o campo `cliente` (texto) já usado pela busca full-text
 - [x] Logout automático por inatividade (2h sem uso, aviso 1min antes) — resposta a uma preocupação de segurança da cliente; o controle de expiração pelo painel do Supabase exige plano Pro, então a solução ficou no próprio app
-- [ ] **← PRÓXIMO PASSO: Usar em produção por 2–3 semanas e ajustar a organização antes de pensar em multiusuário**
-- [ ] Revisar LGPD e sigilo profissional antes de abrir para outros advogados — reunião com a cliente marcada para 28/08/2026, sujeita à confirmação dela
 
-**Importante:** o app está funcional de ponta a ponta em produção — login, upload, categorização, busca, exclusão e exportação testados no navegador com o usuário real e com a cliente, incluindo bugs achados e corrigidos no processo (busca full-text precisou virar trigger em vez de coluna gerada; nomes de arquivo com acento quebravam a chave no Storage, agora sanitizados; a migração de retenção não tinha sido aplicada no banco de produção, quebrando toda exclusão até ser corrigida; a mensagem de erro do modal de exclusão ficava escondida atrás do próprio modal; a separação entre corpo do Ofício e orientações de preenchimento falhava por causa de quebra de linha estilo Windows `\r\n`). O modelo padrão de Ofício já pode gerar novos Ofícios, com a cópia registrada como versão inicial em `documento_versao`, e o preenchimento acontece direto numa tela própria. A exportação completa em `.zip` é autenticada, limitada a 500 documentos/500 MB e inclui os arquivos do Storage e um `manifest.json` com os metadados. Documentos podem ter retenção manual ou data fixa, que bloqueia a exclusão antes do prazo — reforçado a nível de banco, não só de aplicação. SSL/HTTPS ativo via Hostinger; o app redireciona HTTP para HTTPS e envia headers de segurança. A sessão expira sozinha após 2h de inatividade. O próximo passo é usar o sistema em produção por 2–3 semanas e ajustar a organização. Rename para Sigiloteca commitado (`1550913`); funcionalidade em si segue a partir de `a7dfe48`.
+**Importante:** o app está funcional de ponta a ponta em produção — login, upload, categorização, busca, exclusão e exportação testados no navegador com o usuário real e com a cliente, incluindo bugs achados e corrigidos no processo (busca full-text precisou virar trigger em vez de coluna gerada; nomes de arquivo com acento quebravam a chave no Storage, agora sanitizados; a migração de retenção não tinha sido aplicada no banco de produção, quebrando toda exclusão até ser corrigida; a mensagem de erro do modal de exclusão ficava escondida atrás do próprio modal; a separação entre corpo do Ofício e orientações de preenchimento falhava por causa de quebra de linha estilo Windows `\r\n`). Documentos podem ter retenção manual ou data fixa, que bloqueia a exclusão antes do prazo — reforçado a nível de banco, não só de aplicação. SSL/HTTPS ativo via Hostinger. Rename para Sigiloteca commitado (`1550913`); funcionalidade em si segue a partir de `a7dfe48`.
+
+### Segurança, LGPD e sigilo profissional (09–10/09/2026)
+
+Trabalho grande, feito em cima da Análise Jurídica da Angela e do checklist §49 pré-comercialização. Migrations `20260909000007` a `20260910000016`.
+
+- [x] **Fundamento jurídico de retenção + legal hold** — enum `retention_basis` (7 fundamentos: obrigação legal, defesa em processo, etc.), coluna `legal_hold` em `documento` (preservação especial, sem data certa), triggers de retenção/storage atualizadas pra bloquear também por legal hold
+- [x] **Log de auditoria** (`audit_log`) — login/logout, criação/edição/exclusão de documento e cliente, exportação, edição de metadados, anonimização; imutável por RLS (sem policy de update/delete); tela `/auditoria` traduz os eventos pra texto legível; retenção do próprio log em **3 anos** (art. 206, §3º, V do CC), via trigger sem depender de `pg_cron`
+- [x] **MFA (TOTP)** — ativação/desativação em `/conta`, desafio de segundo fator em `/login/mfa`; o `proxy` força `aal2` em qualquer rota quando a conta tem fator verificado
+- [x] **Bloqueio por tentativas de login** — 5 senhas erradas em 15 min bloqueia a conta por 15 min (por e-mail, não por IP); tela mostra tentativas restantes e o tempo real até o desbloqueio
+- [x] **Revogação de sessão/token** — "Encerrar todas as sessões" em `/conta`, via `signOut({scope:'global'})`
+- [x] **Requisitos de senha** — checklist visual ao vivo (8+ caracteres, maiúscula, minúscula, número, caractere especial), validado também no servidor (`src/lib/password.ts`); troca de senha não apaga mais os campos certos quando algum está errado (`useActionState`)
+- [x] **Fluxo de convite/onboarding** (`/auth/confirm`, `/definir-senha`) — corrige o link de convite do Supabase, que não sabia gravar cookie de sessão no domínio do app; `scripts/convidar-usuario.mjs` gera o link via Admin API sem depender do e-mail nativo do Supabase (template só editável no plano Pro)
+- [x] **Rate limit em exportações** — 10 exportações/hora por workspace, reaproveitando o próprio `audit_log`
+- [x] **Edição de metadados de documento** (`/documentos/[id]/metadados`) — título, categoria, cliente, processo, área, tags editáveis mesmo em documento retido/legal hold (só o conteúdo do arquivo fica travado), com diff completo no log de auditoria
+- [x] **Anonimização de documentos** — ação manual e irreversível: apaga o arquivo e o histórico de versões do Storage, limpa cliente/processo/área/tags, mantém o registro como dado anonimizado de uso do controlador (LGPD art. 16, IV); bloqueada nas mesmas condições que a exclusão
+- [x] **Propagação de correção de dado** — corrigir o nome de um cliente atualiza automaticamente `documento.cliente` em todos os documentos vinculados (LGPD art. 18, III), em vez de deixar um nome antigo "congelado"
+- [x] **Exclusão de cliente com confirmação reforçada** — passou a exigir digitar "EXCLUIR", igual à exclusão de documento, já que apaga dados pessoais (endereço, e-mail, celular, CPF) em definitivo
+- [x] **Formulário de titulares** (`/titulares`, público + `/titulares/solicitacoes`, autenticado) — qualquer pessoa (cliente cadastrado ou não) pode exercer os direitos do art. 18 da LGPD; retorno ao titular continua manual
+- [x] **Decisões jurídicas fechadas com a Angela**: comarca do foro (Belo Horizonte/MG), garantias dos suboperadores (Supabase/Cloudflare/Hostinger — redação da Cláusula 5 do contrato), segunda revisão jurídica externa (critério mantido: antes do 1º escritório-cliente pagante), normas da OAB seção 2 reestruturada (premissas técnicas vs. parecer jurídico separados)
+
+**Ainda pendente** (ver `status-execucao-sigiloteca.md` para o detalhe completo): upgrade do plano Supabase (decisão de orçamento do Luiz), teste de restauração de backup, teste de incidente simulado, mecanismo de busca para titulares não cadastrados como cliente (aguardando processo da Angela), formalização por escrito da Política de Backup/Termos de Uso/Política de acesso mínimo (mérito já decidido, falta só redigir).
+
+- [ ] **← PRÓXIMO PASSO**: rodar as migrações `20260910000011`–`20260910000016` em produção (se ainda não rodadas), validar o fluxo de convite e o MFA com um usuário real, e seguir com os itens "ainda pendente" acima antes de abrir cadastro para o primeiro escritório-cliente pagante.
 
 ## O que já existe neste repositório
 
@@ -66,33 +89,58 @@ sigiloteca/
 │   └── tokens.css         Variáveis CSS de cor + escala tipográfica (claro/escuro)
 ├── modelos/
 │   └── oficio-padrao.md    Modelo padrão de Ofício
+├── scripts/
+│   └── convidar-usuario.mjs   Gera link de convite de conta via Admin API (sem depender do e-mail do Supabase)
 ├── supabase/
 │   └── migrations/
-│       ├── 20260820000001_init_schema.sql          Schema: workspace, documento, documento_versao + RLS
-│       ├── 20260820000002_storage_documentos.sql    Bucket "documentos" + RLS de Storage
-│       ├── 20260820000003_documento_busca.sql       Busca full-text via trigger (tsvector + GIN)
-│       ├── 20260821000004_retencao_documentos.sql   Política de retenção e descarte
-│       ├── 20260826000005_retencao_bloqueio_bd.sql  Retenção reforçada no banco (triggers em documento e storage.objects)
-│       └── 20260827000006_cadastro_clientes.sql     Tabela cliente + RLS + documento.cliente_id
+│       ├── 20260820000001_init_schema.sql              Schema: workspace, documento, documento_versao + RLS
+│       ├── 20260820000002_storage_documentos.sql        Bucket "documentos" + RLS de Storage
+│       ├── 20260820000003_documento_busca.sql           Busca full-text via trigger (tsvector + GIN)
+│       ├── 20260821000004_retencao_documentos.sql       Política de retenção e descarte
+│       ├── 20260826000005_retencao_bloqueio_bd.sql      Retenção reforçada no banco (triggers em documento e storage.objects)
+│       ├── 20260827000006_cadastro_clientes.sql         Tabela cliente + RLS + documento.cliente_id
+│       ├── 20260909000007_matriz_retencao_juridica.sql  Fundamento jurídico de retenção (retention_basis) + legal_hold
+│       ├── 20260909000008_log_auditoria.sql             Tabela audit_log (imutável por RLS)
+│       ├── 20260909000009_log_auditoria_retencao_email.sql  user_email no audit_log + retenção do log
+│       ├── 20260909000010_revisao_rls_storage.sql       Hardening de RLS/Storage (UPDATE também bloqueado)
+│       ├── 20260910000011_bloqueio_tentativas_login.sql Bloqueio por tentativas de login
+│       ├── 20260910000012_login_lockout_feedback.sql    Retorna tentativas restantes + horário de desbloqueio
+│       ├── 20260910000013_metadados_documento_audit.sql Evento document_metadata_update
+│       ├── 20260910000014_anonimizacao_documento.sql    Coluna documento.anonymized + evento document_anonymize
+│       ├── 20260910000015_titulares_solicitacoes.sql    Tabela solicitacao_titular (RLS pública pra INSERT)
+│       └── 20260910000016_retencao_audit_log_3_anos.sql Retenção do audit_log de 12 meses para 3 anos
 ├── src/
-│   ├── proxy.ts           Sessão + proteção de rotas (convenção Next 16, era middleware.ts)
+│   ├── proxy.ts           Sessão + proteção de rotas + step-up de MFA (convenção Next 16, era middleware.ts)
 │   ├── app/
 │   │   ├── page.tsx        Dashboard: upload, filtro/busca, lista de documentos
 │   │   ├── layout.tsx      Fontes da marca + InactivityGuard (logout automático)
-│   │   ├── login/          Tela de login (email+senha) + server action
-│   │   ├── conta/          Tela de troca de senha
-│   │   ├── clientes/       Tela de cadastro de clientes (criar, editar, excluir)
-│   │   ├── documentos/[id]/editar/  Editor de Ofício em tela (preencher + salvar)
+│   │   ├── login/          Login (email+senha) + bloqueio por tentativas; login/mfa/ = desafio de segundo fator
+│   │   ├── auth/confirm/   Troca token de e-mail (convite) por sessão de verdade (verifyOtp)
+│   │   ├── definir-senha/  Primeiro acesso após convite — define senha sem pedir a atual
+│   │   ├── conta/          Senha (com checklist de requisitos), MFA, encerrar todas as sessões
+│   │   ├── clientes/       Cadastro de clientes (criar, editar, excluir com confirmação digitada)
+│   │   ├── documentos/[id]/editar/     Editor de Ofício em tela (preencher + salvar)
+│   │   ├── documentos/[id]/metadados/  Editar título/categoria/cliente/processo/área/tags
+│   │   ├── auditoria/      Log de eventos do workspace (só leitura)
+│   │   ├── titulares/      Formulário público de direitos LGPD + solicitacoes/ (lista autenticada)
 │   │   ├── actions.ts       Server action de logout
-│   │   ├── actions/documentos.ts   Server actions: criar documento, criar/editar Ofício a partir do modelo, excluir documento
-│   │   ├── actions/clientes.ts     Server actions: criar, editar, excluir cliente
-│   │   └── api/exportar/route.ts   Rota autenticada de exportação em .zip (documentos + manifest.json)
-│   ├── components/         UploadForm, NewOficioForm, DocumentList, OficioEditor, ClienteForm,
-│   │                       ClienteList, ClienteCombobox, InactivityGuard
+│   │   ├── actions/audit.ts        logAuditEvent + tipos de ação
+│   │   ├── actions/documentos.ts   Criar, editar metadados, anonimizar, excluir documento
+│   │   ├── actions/clientes.ts     Criar, editar (com propagação de correção), excluir cliente
+│   │   └── api/exportar/route.ts   Exportação em .zip, autenticada e com rate limit
+│   ├── components/         UploadForm, NewOficioForm, DocumentList, OficioEditor, ClienteForm, ClienteList,
+│   │                       ClienteCombobox, InactivityGuard, MfaManager, ChangePasswordForm,
+│   │                       PasswordRequisitosChecklist, SenhaInicialForm, EditarMetadadosForm,
+│   │                       SolicitacaoTitularForm, SolicitacoesTitularList
 │   └── lib/
-│       ├── supabase/       client.ts, server.ts, middleware.ts (sessão)
-│       └── workspace.ts    getOrCreateWorkspace (bootstrap do workspace único)
-├── .env.local.example     Modelo do .env.local (o real é gitignorado, uma cópia por máquina)
+│       ├── supabase/       client.ts, server.ts, middleware.ts (sessão + MFA + rotas públicas)
+│       ├── workspace.ts    getOrCreateWorkspace (bootstrap do workspace único)
+│       ├── audit-log.ts    Labels e descrição legível dos eventos de auditoria
+│       ├── password.ts     Requisitos de senha compartilhados (checklist + validação no servidor)
+│       ├── retention.ts    Opções de fundamento jurídico de retenção
+│       └── titulares.ts    Labels dos direitos do titular (LGPD art. 18)
+├── .env.local.example     Modelo do .env.local (o real é gitignorado, uma cópia por máquina) — inclui
+│                          NEXT_PUBLIC_SITE_URL e SUPABASE_SERVICE_ROLE_KEY (só scripts administrativos)
 └── package.json           Next.js 16, React 19, Tailwind 4, @supabase/supabase-js, @supabase/ssr
 ```
 
@@ -105,7 +153,7 @@ sigiloteca/
 | Arquivos — documentos | Supabase Storage | PDFs, DOCX, RG/certidões escaneadas |
 | Arquivos — geoespaciais/grandes | Cloudflare R2 | Sem custo de egress, mais barato pra `.dwg`/`.shp`/mapas grandes |
 | Busca | Postgres full-text search | Suficiente pro volume do MVP |
-| Backup local | Botão "Exportar tudo" (.zip) | Nuvem é a fonte oficial; local é só cópia sob demanda |
+| Backup local | Botão "Exportar tudo" (.zip) | Nuvem é a fonte oficial; local é só cópia sob demanda, com rate limit |
 | Hospedagem | Hostinger (plano Business, Web Apps/Node.js) | Deploy automático via GitHub (`luizgteixeira/sigiloteca-prod`, branch `main`) |
 | Domínio | sigiloteca.com.br | SSL/HTTPS ativo; CDN da Hostinger mantido **desligado** (fazia cache full-page ignorando sessão) |
 
@@ -116,8 +164,13 @@ Hospedagem e domínio: por conta do desenvolvedor (Luiz), sem custo adicional pr
 ```text
 Workspace (o escritório da cliente)
   → Categoria (uma das 6 abaixo)
-    → Documento (arquivo + cliente, processo, área, tags)
+    → Documento (arquivo + cliente, processo, área, tags, fundamento de retenção, legal hold, anonimização)
       → Versão (histórico — usado pelos modelos que evoluem, ex: Ofício)
+
+Cliente (cadastro do escritório — pessoa física/jurídica atendida)
+Audit_log (trilha imutável de eventos, por workspace)
+Login_lockout (contagem de tentativas de login, por e-mail — sem RLS de app, só via função)
+Solicitacao_titular (pedidos do formulário público de direitos LGPD — sem workspace_id)
 ```
 
 ### As 6 categorias validadas
@@ -133,23 +186,24 @@ Workspace (o escritório da cliente)
 
 ### Regras importantes pro schema
 
-- Tudo isolado por `workspace_id` via Row Level Security do Supabase, mesmo com um único usuário hoje — é isso que permite abrir pra outros escritórios depois sem reescrever nada.
+- Tudo isolado por `workspace_id` via Row Level Security do Supabase, mesmo com um único usuário hoje — é isso que permite abrir pra outros escritórios depois sem reescrever nada. Exceção deliberada: `solicitacao_titular` (formulário público de titulares) não tem `workspace_id`, porque o Sigiloteca hoje serve um único escritório por instalação.
 - Documentos de arquivos grandes/geoespaciais devem guardar qual provedor de storage foi usado (Supabase Storage vs R2), já que são dois buckets diferentes.
 - Categoria "Ofícios" precisa de um campo/flag pra marcar qual documento é o "modelo padrão" da categoria.
+- Retenção não é um prazo único: cada documento retido precisa de `retention_basis` (fundamento jurídico) explícito — o sistema não presume motivo sozinho, quem decide é o escritório/controlador.
 
 ## Design system
 
-Já importado em `src/app/globals.css` e aplicado nas telas reais (login, dashboard). Resumo:
+Já importado em `src/app/globals.css` e aplicado em todas as telas reais. Resumo:
 
 - **Cores**: `--ink` (#1e2230), `--bg`/`--surface`/`--surface-2` (tons de papel), `--accent` (#7a2333, oxblood da marca), `--success`/`--warning`/`--danger` + variantes `-soft`, todos com equivalente de modo escuro no mesmo nome de token.
 - **Tipografia**: Fraunces (títulos/H1/H2), Source Sans 3 (texto de interface/rodapé), IBM Plex Mono (categorias, dados, rótulos).
-- Referência visual completa: artifact "Design System Escritório Virtual" (publicado na conversa anterior) e PDF salvo em `luiz-gustavo-dev\escritorio-virtual\Design System - Escritorio Virtual.pdf`.
+- Referência visual completa: artifact "Design System Escritório Virtual" (publicado na conversa anterior) e PDF salvo em `luiz-gustavo-dev\escritorio-virtual\Design System - Escritorio Virtual.pdf`. Manual de uso atualizado em `luiz-gustavo-dev\escritorio-virtual\manual-uso-sigiloteca.pdf`.
 
 ## Fora de escopo nesta fase
 
-(Já orçado à parte, só depois de validar o uso pessoal)
+A cliente autorizou a comercialização (10/09/2026), mas a infraestrutura técnica de multiusuário/multi-tenant ainda não foi construída — a autorização é uma decisão de negócio, não implica que estes itens já existam:
 
-- Multiusuário / venda pra outros escritórios (login separado, planos, cobrança)
+- Login separado por usuário dentro do mesmo escritório (planos, papéis de acesso, cobrança)
 - Aplicativo mobile nativo
 - Classificação automática de documentos por IA/OCR
 - Assinatura eletrônica de documentos
