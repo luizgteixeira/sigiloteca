@@ -27,9 +27,11 @@ export default async function DefinirSenhaPage({
   }
 
   const cookieStore = await cookies();
-  if (!cookieStore.get('definir-senha')) {
+  const origem = cookieStore.get('definir-senha')?.value;
+  if (!origem) {
     redirect('/conta');
   }
+  const recuperacao = origem === 'recuperacao';
 
   return (
     <div className="flex min-h-full flex-1 items-center justify-center bg-bg px-4">
@@ -52,7 +54,9 @@ export default async function DefinirSenhaPage({
           </div>
         </div>
         <p className="mt-1 font-body text-sm text-ink-muted">
-          Bem-vindo(a). Defina sua senha para começar a usar.
+          {recuperacao
+            ? 'Crie uma nova senha para sua conta.'
+            : 'Bem-vindo(a). Defina sua senha para começar a usar.'}
         </p>
 
         {erro && (

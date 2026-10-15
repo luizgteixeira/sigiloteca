@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
+import { formatarDataHora } from '@/lib/datas';
 import { getOrCreateWorkspace } from '@/lib/workspace';
 import {
   AUDIT_ACTION_LABELS,
@@ -96,7 +97,7 @@ export default async function AuditoriaPage() {
                   className="border-b border-line last:border-0"
                 >
                   <td className="whitespace-nowrap px-4 py-3 text-ink-muted">
-                    {new Date(evento.created_at).toLocaleString('pt-BR')}
+                    {formatarDataHora(evento.created_at)}
                   </td>
                   <td className="px-4 py-3">
                     <span className="rounded-full bg-accent-soft px-2 py-1 font-mono text-xs text-accent">

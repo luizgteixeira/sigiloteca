@@ -1,5 +1,6 @@
 'use server';
 
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { logAuditEvent } from '@/app/actions/audit';
@@ -33,5 +34,9 @@ export async function verifyMfaChallenge(formData: FormData) {
   }
 
   await logAuditEvent('login');
-  redirect('/');
+
+  // Veio de um link de convite/recuperação de senha: o segundo fator só
+  // liberou a sessão, a senha nova ainda precisa ser definida.
+  const cookieStore = await cookies();
+  redirect(cookieStore.get('definir-senha') ? '/definir-senha' : '/');
 }

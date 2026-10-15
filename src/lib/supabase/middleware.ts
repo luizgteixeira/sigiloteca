@@ -37,12 +37,16 @@ export async function updateSession(request: NextRequest) {
   // Formulário público de direitos do titular (LGPD art. 18) — quem
   // preenche não é usuário do Sigiloteca, não faz sentido exigir login.
   const isTitularesFormRoute = request.nextUrl.pathname === "/titulares";
+  // Pedido de link de redefinição de senha — quem esqueceu a senha não tem
+  // sessão.
+  const isEsqueciSenhaRoute = request.nextUrl.pathname === "/esqueci-senha";
 
   if (
     !user &&
     !isLoginRoute &&
     !isAuthConfirmRoute &&
-    !isTitularesFormRoute
+    !isTitularesFormRoute &&
+    !isEsqueciSenhaRoute
   ) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";

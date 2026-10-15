@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { marcarSolicitacaoConcluida } from '@/app/titulares/solicitacoes/actions';
+import { formatarDataHora } from '@/lib/datas';
 import { DIREITO_LABELS } from '@/lib/titulares';
 
 export type SolicitacaoRow = {
@@ -84,7 +85,7 @@ export function SolicitacoesTitularList({
                 className="border-b border-line last:border-0 align-top"
               >
                 <td className="whitespace-nowrap px-4 py-3 text-ink-muted">
-                  {new Date(solicitacao.created_at).toLocaleString('pt-BR')}
+                  {formatarDataHora(solicitacao.created_at)}
                 </td>
                 <td className="px-4 py-3 text-ink">
                   {solicitacao.nome}

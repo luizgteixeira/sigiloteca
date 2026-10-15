@@ -4,10 +4,12 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { senhaAtendeRequisitos } from '@/lib/password';
+import { logAuditEvent } from '@/app/actions/audit';
 
 export async function setInitialPassword(formData: FormData) {
   const cookieStore = await cookies();
-  if (!cookieStore.get('definir-senha')) {
+  const origem = cookieStore.get('definir-senha')?.value;
+  if (!origem) {
     redirect('/conta');
   }
 
@@ -33,6 +35,12 @@ export async function setInitialPassword(formData: FormData) {
   const { error } = await supabase.auth.updateUser({ password: novaSenha });
   if (error) {
     redirect('/definir-senha?erro=servidor');
+  }
+
+  // A sessão aberta pelo link de recuperação não passa por signIn(), então
+  // o login precisa ser registrado aqui para aparecer na auditoria.
+  if (origem === 'recuperacao') {
+    await logAuditEvent('login', { metadata: { motivo: 'redefinicao_senha' } });
   }
 
   cookieStore.delete('definir-senha');

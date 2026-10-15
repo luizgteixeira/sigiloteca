@@ -89,6 +89,9 @@ export function describeAuditEvent(row: AuditLogRow): string {
       return '—';
     }
     case 'login':
+      if (metadata.motivo === 'redefinicao_senha') {
+        return 'Pelo link de redefinição de senha';
+      }
       return '—';
   }
 }

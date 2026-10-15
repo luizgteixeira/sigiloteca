@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { formatarData } from '@/lib/datas';
 import { logAuditEvent } from './audit';
 
 // Server Actions que lançam Error têm a mensagem escondida pelo Next.js em
@@ -258,7 +259,7 @@ export async function updateOficioConteudo(
     new Date(documento.retention_until).getTime() > Date.now()
   ) {
     return {
-      error: `Este documento está retido até ${new Date(documento.retention_until).toLocaleDateString('pt-BR')} e não pode ser alterado.`,
+      error: `Este documento está retido até ${formatarData(documento.retention_until)} e não pode ser alterado.`,
     };
   }
 
@@ -479,7 +480,7 @@ export async function anonymizeDocumento(
     new Date(documento.retention_until).getTime() > Date.now()
   ) {
     return {
-      error: `Este documento está retido até ${new Date(documento.retention_until).toLocaleDateString('pt-BR')}.`,
+      error: `Este documento está retido até ${formatarData(documento.retention_until)}.`,
     };
   }
 
@@ -571,7 +572,7 @@ export async function deleteDocumento(
     new Date(documento.retention_until).getTime() > Date.now()
   ) {
     return {
-      error: `Este documento está retido até ${new Date(documento.retention_until).toLocaleDateString('pt-BR')}.`,
+      error: `Este documento está retido até ${formatarData(documento.retention_until)}.`,
     };
   }
 

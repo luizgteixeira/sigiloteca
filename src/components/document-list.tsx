@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { formatarData } from '@/lib/datas';
 import { anonymizeDocumento, deleteDocumento } from '@/app/actions/documentos';
 
 export const CATEGORIA_LABELS: Record<string, string> = {
@@ -55,7 +56,7 @@ function motivoBloqueio(documento: DocumentoRow, acao: Acao): string | null {
     documento.retentionUntil &&
     new Date(documento.retentionUntil).getTime() > Date.now()
   ) {
-    return `Este documento está retido até ${new Date(documento.retentionUntil).toLocaleDateString('pt-BR')} e não pode ser ${verbo}.`;
+    return `Este documento está retido até ${formatarData(documento.retentionUntil)} e não pode ser ${verbo}.`;
   }
   return null;
 }

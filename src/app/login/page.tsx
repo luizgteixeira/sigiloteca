@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import Link from 'next/link';
 import { signIn } from './actions';
 import { PasswordField } from '@/components/password-field';
 
@@ -56,7 +57,13 @@ export default async function LoginPage({
             .
           </p>
         )}
-        {error && error !== 'bloqueado' && (
+        {error === 'link_expirado' && (
+          <p className="mt-4 rounded-md bg-danger-soft px-3 py-2 font-body text-sm text-danger">
+            O link de redefinição de senha é inválido ou expirou. Peça um
+            novo link em &ldquo;Esqueceu sua senha?&rdquo;, abaixo.
+          </p>
+        )}
+        {error && error !== 'bloqueado' && error !== 'link_expirado' && (
           <p className="mt-4 rounded-md bg-danger-soft px-3 py-2 font-body text-sm text-danger">
             Email ou senha inválidos.
             {restantes &&
@@ -101,6 +108,12 @@ export default async function LoginPage({
               Senha
             </label>
             <PasswordField />
+            <Link
+              href="/esqueci-senha"
+              className="mt-1 self-end font-body text-sm text-accent hover:underline"
+            >
+              Esqueceu sua senha?
+            </Link>
           </div>
 
           <button
