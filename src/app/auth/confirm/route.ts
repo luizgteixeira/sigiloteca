@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import type { EmailOtpType } from '@supabase/supabase-js';
+import { origemPublica } from '@/lib/site-url';
 
 // Rota que os links de e-mail do Supabase (convite, recuperação de senha
 // etc.) precisam apontar quando o app usa sessão via cookie (@supabase/ssr).
@@ -14,7 +15,8 @@ import type { EmailOtpType } from '@supabase/supabase-js';
 // trocado por sessão com exchangeCodeForSession(), usando o code verifier
 // que ficou em cookie no navegador que pediu a redefinição.
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = request.nextUrl;
+  const origin = origemPublica(request.headers);
   const tokenHash = searchParams.get('token_hash');
   const code = searchParams.get('code');
   const type = searchParams.get('type');

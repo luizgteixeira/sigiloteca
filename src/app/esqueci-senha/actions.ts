@@ -1,7 +1,9 @@
 'use server';
 
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { origemPublica } from '@/lib/site-url';
 
 export async function solicitarRedefinicaoSenha(formData: FormData) {
   const email = String(formData.get('email') ?? '').trim().toLowerCase();
@@ -9,8 +11,7 @@ export async function solicitarRedefinicaoSenha(formData: FormData) {
     redirect('/esqueci-senha');
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-  const destino = new URL('/auth/confirm', siteUrl);
+  const destino = new URL('/auth/confirm', origemPublica(await headers()));
   destino.searchParams.set('type', 'recovery');
   destino.searchParams.set('next', '/definir-senha');
 
