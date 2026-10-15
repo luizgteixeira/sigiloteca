@@ -63,12 +63,17 @@ export async function updateSession(request: NextRequest) {
     if (precisaMfa && !isMfaRoute) {
       const url = request.nextUrl.clone();
       url.pathname = "/login/mfa";
+      // Sem isso, o ?error= de outra tela (ex.: /login?error=link_expirado)
+      // vinha junto e a tela do 2FA mostrava "Código inválido" sem o
+      // usuário ter digitado nada.
+      url.search = "";
       return NextResponse.redirect(url);
     }
 
     if (!precisaMfa && (isLoginRoute || isMfaRoute)) {
       const url = request.nextUrl.clone();
       url.pathname = "/";
+      url.search = "";
       return NextResponse.redirect(url);
     }
   }

@@ -48,7 +48,7 @@ export default async function LoginMfaPage({
           Digite o código do seu app autenticador.
         </p>
 
-        {error && (
+        {error === '1' && (
           <p className="mt-4 rounded-md bg-danger-soft px-3 py-2 font-body text-sm text-danger">
             Código inválido. Tente novamente.
           </p>
