@@ -49,3 +49,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# materiais de divulgação (fora do repositório, que é espelhado publicamente)
+marketing/
