@@ -59,8 +59,9 @@ export default async function LoginPage({
         )}
         {error === 'link_expirado' && (
           <p className="mt-4 rounded-md bg-danger-soft px-3 py-2 font-body text-sm text-danger">
-            O link de redefinição de senha é inválido ou expirou. Peça um
-            novo link em &ldquo;Esqueceu sua senha?&rdquo;, abaixo.
+            Este link é inválido, já foi usado ou expirou. Para redefinir a
+            senha, peça um novo link em &ldquo;Esqueceu sua senha?&rdquo;,
+            abaixo.
           </p>
         )}
         {error && error !== 'bloqueado' && error !== 'link_expirado' && (

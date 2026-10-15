@@ -59,6 +59,5 @@ export async function GET(request: NextRequest) {
     return response;
   }
 
-  const erro = type === 'recovery' ? 'link_expirado' : '1';
-  return NextResponse.redirect(new URL(`/login?error=${erro}`, origin));
+  return NextResponse.redirect(new URL('/login?error=link_expirado', origin));
 }
