@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Fraunces, Source_Sans_3, IBM_Plex_Mono } from 'next/font/google';
 import { InactivityGuard } from '@/components/inactivity-guard';
+import { RecarregarAposDeploy } from '@/components/recarregar-apos-deploy';
 import './globals.css';
 
 const fraunces = Fraunces({
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <InactivityGuard />
+        <RecarregarAposDeploy />
         {children}
         <footer className="border-t border-line bg-surface px-4 py-5">
           <div className="mx-auto w-full max-w-4xl text-center">
