@@ -74,7 +74,7 @@ Pedidos da Angela depois do uso real: horário errado na auditoria e nenhuma for
 
 - [x] **Fuso horário fixo em Brasília** — datas eram formatadas no servidor da Hostinger (outro fuso), deslocando os horários da auditoria; agora `src/lib/datas.ts` (`formatarDataHora`/`formatarData`, `America/Sao_Paulo`) é usado em todas as telas — registros antigos também aparecem certos, nada mudou no banco
 - [x] **"Esqueceu sua senha?"** — link na tela de login → `/esqueci-senha` (resposta idêntica exista ou não a conta) → e-mail → `/auth/confirm` → `/definir-senha` ("Crie uma nova senha"); contas com MFA passam pelo código do autenticador antes; o acesso pelo link fica registrado na auditoria como login "pelo link de redefinição de senha"
-- [x] **E-mail de autenticação via SMTP próprio** — Supabase configurado com uma caixa de e-mail real da Hostinger (alias não autentica: dá erro `535`); o template "Reset Password" aponta direto pra `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/definir-senha`, sem depender do redirecionamento do Supabase nem de abrir no mesmo navegador
+- [x] **E-mail de autenticação via SMTP próprio** — Supabase configurado com SMTP próprio (até 29/10 uma caixa da Hostinger; hoje o Resend — ver seção de 29/10); o template "Reset Password" aponta direto pra `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/definir-senha`, sem depender do redirecionamento do Supabase nem de abrir no mesmo navegador
 - [x] **Endereço público atrás do proxy** — na Hostinger `request.url` é `http://0.0.0.0:3000`; links e redirecionamentos usam `origemPublica()` (`src/lib/site-url.ts`): `NEXT_PUBLIC_SITE_URL` → `x-forwarded-host`/`host` → `localhost`
 - [x] **Correções de fluxo** — link de e-mail inválido/usado/expirado mostra mensagem própria (antes: "Email ou senha inválidos"); o redirecionamento pro 2FA não carrega mais a query da rota anterior (antes a tela abria com "Código inválido" sem código digitado)
 - [x] **Next.js 16.3.1 → 16.3.8** — corrige 6 vulnerabilidades apontadas pela Hostinger (3 críticas); `npm audit --omit=dev` sem vulnerabilidades
@@ -86,7 +86,7 @@ Pedidos da Angela depois do uso real: horário errado na auditoria e nenhuma for
 - [x] **Formulários de senha** (Minha conta e `/definir-senha`) — recusa do Supabase traduzida (`motivoRecusaSenha`: "senha aparece em vazamentos", "precisa ser diferente da atual") em vez de erro genérico; "Salvar" desabilitado até cumprir todos os requisitos e a confirmação bater; colar/arrastar bloqueado em "Confirmar nova senha"; requisito cumprido destacado (fundo verde-claro, negrito, ícone preenchido)
 - [x] **Troca de senha não derruba mais o 2FA** — a conferência da senha atual usa um cliente Supabase isolado (sem cookies); antes ela substituía a sessão aal2 por uma aal1 e o usuário voltava pro desafio de MFA
 - [x] **Página de ajuda** (`/ajuda`, pública e liberada também no meio do desafio de 2FA) — só as dúvidas difíceis: 2FA (inclusive celular perdido, com contato do responsável técnico), senha, retenção/legal hold/anonimização/exclusão, titulares, exportação e auditoria; link "Ajuda" no menu, no login e na tela do código; "?" (`AjudaLink`) ao lado do legal hold e do 2FA. **Textos de Retenção e Titulares aguardam revisão da Angela**
-- [x] **Aviso por e-mail de solicitação de titular** — o formulário público dispara e-mail (nodemailer, SMTP da Hostinger, `src/lib/aviso-email.ts`) para `AVISO_TITULARES_PARA` com o direito pedido, a data e o link do painel — sem nome, e-mail, CPF ou descrição do titular. Best-effort: sem as variáveis `SMTP_*` ou com falha no envio, a solicitação é registrada normalmente
+- [x] **Aviso por e-mail de solicitação de titular** — o formulário público dispara e-mail (nodemailer, `src/lib/aviso-email.ts`, mesmo SMTP do Supabase) para `AVISO_TITULARES_PARA` com o direito pedido, a data e o link do painel — sem nome, e-mail, CPF ou descrição do titular. Best-effort: sem as variáveis `SMTP_*` ou com falha no envio, a solicitação é registrada normalmente
 - [x] **Exportação** — pastas do ZIP só com o título (sufixo "(2)", "(3)" apenas para título repetido na mesma categoria; o id fica no `manifest.json`); documento anonimizado entra só no manifest (`arquivo: null`), em vez de derrubar a exportação inteira com 502 ao tentar baixar um arquivo já apagado
 - [x] **Interface** — "Baixar" abre em nova aba; "Sua conta" virou "Minha conta"; botão flutuante "voltar ao início" (`VoltarAoTopo`) na Ajuda e na Auditoria
 - [x] **Next.js 16.3.8 → 16.4.3** — corrige uma RCE crítica na otimização de imagens com SVG, um DoS via Server Actions e uma RCE em `use cache`, além do zod; `npm audit` sem vulnerabilidades (inclusive dependências de desenvolvimento)
@@ -97,11 +97,13 @@ Várias pessoas no mesmo escritório, cada uma com um papel. Migração `2026102
 
 - [x] **`workspace_membro`** (escritório, usuário, e-mail, papel; cada pessoa em um único escritório). Todas as regras de acesso — documento, versões, cliente, auditoria, arquivos do Storage, titulares — passaram de "dono do escritório" (`owner_id`) para "membro", via `eh_membro()`/`eh_admin()`/`papel_do_usuario()` (security definer). `workspace.owner_id` ficou só como histórico
 - [x] **Papéis** (`src/lib/permissoes.ts`, espelhado no banco): **Administrador** (tudo, inclusive equipe, auditoria, exportar, excluir/anonimizar documentos, excluir clientes) · **Advogado** (documentos, clientes e titulares) · **Assistente** (documentos e clientes). O que o papel não permite some da tela, é recusado na server action e no banco (policies de delete só para admin; trigger impede não-admin de anonimizar)
-- [x] **Tela Equipe** (`/equipe`, só administrador): convidar por e-mail (service role cria a conta + e-mail pelo SMTP da Hostinger; sem SMTP, a tela mostra o link para repassar), trocar papel, remover, renomear o escritório. Trigger impede deixar o escritório sem administrador; ninguém remove a si mesmo. Eventos `member_invite`/`member_role_change`/`member_remove` na auditoria
+- [x] **Tela Equipe** (`/equipe`, só administrador): convidar por e-mail (service role cria a conta + e-mail pelo SMTP; sem SMTP ou com falha, a tela mostra o link para repassar e o código do erro; quem nunca entrou aparece como "Convite pendente", com "Gerar novo link" e "Cancelar convite"), trocar papel, remover, renomear o escritório. Trigger impede deixar o escritório sem administrador; ninguém remove a si mesmo. Eventos `member_invite`/`member_role_change`/`member_remove` na auditoria
 - [x] **Sem escritório** (removido da equipe ou conta sem convite): tela própria, nada do escritório aparece. `getEscritorio` substituiu `getOrCreateWorkspace` — o app não cria mais escritório sozinho
 - [x] **Correção de segurança:** a inclusão em `audit_log` não conferia se o evento era do escritório de quem grava; agora exige ser membro
 - [x] **Dados de produção:** o escritório `7ef92a7f…` (que tinha os 3 documentos, o cliente e o histórico) virou o oficial, com Angela e Luiz como administradores (Luiz até a Angela decidir, pela política de acesso mínimo); o escritório vazio da Angela ficou sem membros e seus 3 eventos de auditoria foram movidos para o oficial. Feito direto no banco, fora do repositório (espelho público). Testado simulando administrador, assistente e conta sem escritório
-- [ ] **Pendente:** `SUPABASE_SERVICE_ROLE_KEY` nas variáveis de ambiente da Hostinger (sem ela a tela Equipe avisa que convites não estão configurados); renomear o escritório (hoje leva o e-mail do Luiz); Angela decidir se o Luiz continua administrador
+- [x] `SUPABASE_SERVICE_ROLE_KEY` nas variáveis da Hostinger; escritório renomeado ("Angela Vieira & Associados")
+- [x] **E-mail via Resend** — o plano de e-mail da Hostinger para sigiloteca.com.br expirou (não renovado) e a caixa usada no SMTP deixou de autenticar, derrubando redefinição de senha, convites e aviso de titulares. Agora tudo sai pelo **Resend** (domínio sigiloteca.com.br verificado por DNS, remetente `nao-responda@sigiloteca.com.br`, sem caixa de e-mail): SMTP do Supabase e variáveis `SMTP_HOST=smtp.resend.com`, `SMTP_PORT=465`, `SMTP_USER=resend`, `SMTP_PASS=<chave de API>`, `SMTP_FROM` (nova — o usuário do SMTP do Resend não é um e-mail). Plano grátis: 100/dia, 3.000/mês
+- [ ] **Pendente:** Angela decidir se o Luiz continua administrador (política de acesso mínimo)
 - **Fase 2 (vários escritórios):** cadastro de escritório novo, formulário de titulares por escritório (`solicitacao_titular` ainda não tem `workspace_id` — hoje administradores e advogados de qualquer escritório veem todas), uma pessoa em mais de um escritório, cobrança
 
 **Ainda pendente** (ver `status-execucao-sigiloteca.md` para o detalhe completo): teste de restauração de backup (agora viável: plano Supabase Pro desde 29/10/2026, com backup diário), revisão pela Angela dos textos de Retenção e Titulares da página `/ajuda`, teste de incidente simulado, mecanismo de busca para titulares não cadastrados como cliente (aguardando processo da Angela), formalização por escrito da Política de Backup/Termos de Uso/Política de acesso mínimo (mérito já decidido, falta só redigir).
@@ -178,7 +180,7 @@ sigiloteca/
 │       ├── supabase/       client.ts, server.ts, middleware.ts (sessão + MFA + rotas públicas)
 │       ├── datas.ts        Formatação de data/hora sempre no fuso de Brasília
 │       ├── site-url.ts     origemPublica(): endereço público do site atrás do proxy da Hostinger
-│       ├── aviso-email.ts  E-mail do próprio app (aviso de solicitação de titular) via SMTP da Hostinger
+│       ├── aviso-email.ts  E-mail do próprio app (convites da equipe, aviso de titular) via SMTP (Resend)
 │       ├── workspace.ts    getEscritorio (escritório + papel do usuário) e verificarPermissao
 │       ├── permissoes.ts   Matriz de papéis (administrador/advogado/assistente)
 │       ├── audit-log.ts    Labels e descrição legível dos eventos de auditoria
@@ -187,7 +189,7 @@ sigiloteca/
 │       └── titulares.ts    Labels dos direitos do titular (LGPD art. 18)
 ├── .env.local.example     Modelo do .env.local (o real é gitignorado, uma cópia por máquina) — inclui
 │                          NEXT_PUBLIC_SITE_URL, SUPABASE_SERVICE_ROLE_KEY (só scripts administrativos) e
-│                          SMTP_* / AVISO_TITULARES_PARA (aviso de titulares; em produção, nas variáveis da Hostinger)
+│                          SMTP_* / SMTP_FROM / AVISO_TITULARES_PARA (e-mails do app; em produção, nas variáveis da Hostinger)
 └── package.json           Next.js 16.4, React 19, Tailwind 4, @supabase/supabase-js, @supabase/ssr, nodemailer
 ```
 
@@ -202,7 +204,7 @@ sigiloteca/
 | Busca | Postgres full-text search | Suficiente pro volume do MVP |
 | Backup local | Botão "Exportar tudo" (.zip) | Nuvem é a fonte oficial; local é só cópia sob demanda, com rate limit |
 | Hospedagem | Hostinger (plano Business, Web Apps/Node.js) | Deploy automático via GitHub (`luizgteixeira/sigiloteca-prod`, branch `main`); build com `--webpack` |
-| E-mail de autenticação | SMTP próprio (caixa da Hostinger) no Supabase | Envio padrão do Supabase só entrega pra membros da equipe; SMTP próprio também libera editar os templates |
+| E-mail (autenticação e app) | Resend via SMTP (Supabase + variáveis `SMTP_*`) | Envio padrão do Supabase só entrega pra membros da equipe; serviço transacional dispensa caixa de e-mail paga e envia como o domínio verificado |
 | Domínio | sigiloteca.com.br | SSL/HTTPS ativo; CDN da Hostinger mantido **desligado** (fazia cache full-page ignorando sessão) |
 
 Hospedagem e domínio: por conta do desenvolvedor (Luiz), sem custo adicional pra cliente nesta fase.
