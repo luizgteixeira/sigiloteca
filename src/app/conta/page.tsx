@@ -28,7 +28,7 @@ export default async function ContaPage({
           />
           <div>
             <p className="font-display text-xl font-semibold text-ink">
-              Sua conta
+              Minha conta
             </p>
             <p className="font-body text-sm text-ink-muted">
               Senha, autenticação e sessões · Sigiloteca

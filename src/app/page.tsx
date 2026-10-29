@@ -150,7 +150,7 @@ export default async function Home({
             href="/conta"
             className="rounded-md border border-line px-3 py-2 font-body text-sm text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink"
           >
-            Sua conta
+            Minha conta
           </Link>
           <a
             href="/api/exportar"
