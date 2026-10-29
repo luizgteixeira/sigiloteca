@@ -32,3 +32,16 @@ body {
   color: var(--ink);
   font-family: var(--font-body);
 }
+
+/* Campos preenchidos automaticamente pelo navegador (senha salva no Edge/
+   Chrome) ganhavam fundo azul próprio do navegador, destoando do resto do
+   formulário. O fundo não pode ser trocado direto; a sombra interna cobre
+   ele com a mesma cor dos demais campos, no tema claro e no escuro. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--surface-2) inset;
+  box-shadow: 0 0 0 1000px var(--surface-2) inset;
+  -webkit-text-fill-color: var(--ink);
+  caret-color: var(--ink);
+}

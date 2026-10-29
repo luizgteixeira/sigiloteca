@@ -96,7 +96,7 @@ export default async function LoginPage({
               name="email"
               type="email"
               required
-              autoComplete="email"
+              autoComplete="username"
               className="rounded-md border border-line bg-surface-2 px-3 py-2 font-body text-ink"
             />
           </div>
