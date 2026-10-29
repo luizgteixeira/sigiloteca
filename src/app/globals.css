@@ -45,21 +45,3 @@ input:-webkit-autofill:focus {
   -webkit-text-fill-color: var(--ink);
   caret-color: var(--ink);
 }
-
-/* Sinal para o PasswordField saber que o navegador preencheu o campo
-   sozinho (ver onAnimationStart lá): animação imperceptível, só para
-   disparar o evento. */
-@keyframes sigiloteca-autofill {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 1;
-  }
-}
-input:-webkit-autofill {
-  animation: sigiloteca-autofill 1ms;
-}
-input:autofill {
-  animation: sigiloteca-autofill 1ms;
-}

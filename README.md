@@ -174,7 +174,7 @@ sigiloteca/
 │   ├── components/         UploadForm, NewOficioForm, DocumentList, OficioEditor, ClienteForm, ClienteList,
 │   │                       ClienteCombobox, InactivityGuard, MfaManager, ChangePasswordForm,
 │   │                       PasswordRequisitosChecklist, SenhaInicialForm, EditarMetadadosForm,
-│   │                       SolicitacaoTitularForm, SolicitacoesTitularList, PasswordField (bloqueia colar na
+│   │                       SolicitacaoTitularForm, SolicitacoesTitularList, PasswordField (sem "Mostrar" na senha atual; bloqueia colar na
 │   │                       confirmação), AjudaLink ("?" para /ajuda), VoltarAoTopo
 │   └── lib/
 │       ├── supabase/       client.ts, server.ts, middleware.ts (sessão + MFA + rotas públicas)
