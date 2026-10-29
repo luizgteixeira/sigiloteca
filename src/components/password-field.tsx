@@ -91,6 +91,12 @@ export function PasswordField({
           </button>
         )}
       </div>
+      {preenchidaPeloNavegador && (
+        <p className="mt-1 font-body text-xs text-ink-muted">
+          Senha preenchida pelo navegador — por segurança, não pode ser
+          exibida. Para ver, apague e digite.
+        </p>
+      )}
       {tentouColar && (
         <p role="alert" className="mt-1 font-body text-xs text-danger">
           Digite a senha novamente — colar não é permitido neste campo.
