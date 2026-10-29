@@ -83,6 +83,12 @@ export default async function LoginMfaPage({
             Confirmar
           </button>
         </form>
+
+        <p className="mt-6 text-center font-body text-sm">
+          <a href="/ajuda#dois-fatores" className="text-accent hover:underline">
+            Perdeu o celular ou o código não funciona?
+          </a>
+        </p>
       </div>
     </div>
   );

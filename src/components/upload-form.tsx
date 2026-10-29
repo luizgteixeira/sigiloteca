@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import { createDocumento } from '@/app/actions/documentos';
 import { RETENTION_BASIS_OPTIONS } from '@/lib/retention';
 import { ClienteCombobox, type ClienteOption } from './cliente-combobox';
+import { AjudaLink } from './ajuda-link';
 
 const CATEGORIAS = [
   { value: 'peticoes', label: 'Petições' },
@@ -305,6 +306,7 @@ export function UploadForm({
             className="size-4 accent-accent"
           />
           Preservação especial (legal hold) — bloqueia exclusão mesmo sem data de retenção
+          <AjudaLink tema="retencao" rotulo="retenção e legal hold" />
         </label>
 
         <div className="flex flex-col gap-1">

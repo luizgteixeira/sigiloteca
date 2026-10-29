@@ -40,13 +40,17 @@ export async function updateSession(request: NextRequest) {
   // Pedido de link de redefinição de senha — quem esqueceu a senha não tem
   // sessão.
   const isEsqueciSenhaRoute = request.nextUrl.pathname === "/esqueci-senha";
+  // Ajuda — parte das dúvidas (senha esquecida, celular do 2FA perdido)
+  // acontece justamente antes de conseguir entrar.
+  const isAjudaRoute = request.nextUrl.pathname === "/ajuda";
 
   if (
     !user &&
     !isLoginRoute &&
     !isAuthConfirmRoute &&
     !isTitularesFormRoute &&
-    !isEsqueciSenhaRoute
+    !isEsqueciSenhaRoute &&
+    !isAjudaRoute
   ) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
@@ -60,7 +64,7 @@ export async function updateSession(request: NextRequest) {
     const precisaMfa =
       aal?.nextLevel === "aal2" && aal.currentLevel !== aal.nextLevel;
 
-    if (precisaMfa && !isMfaRoute) {
+    if (precisaMfa && !isMfaRoute && !isAjudaRoute) {
       const url = request.nextUrl.clone();
       url.pathname = "/login/mfa";
       // Sem isso, o ?error= de outra tela (ex.: /login?error=link_expirado)

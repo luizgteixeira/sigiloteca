@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { AjudaLink } from './ajuda-link';
 
 type Etapa = 'carregando' | 'inativo' | 'ativando' | 'ativo';
 
@@ -126,8 +127,9 @@ export function MfaManager() {
 
   return (
     <div className="flex max-w-sm flex-col gap-3 rounded-lg border border-line bg-surface p-6">
-      <p className="font-body text-sm font-medium text-ink">
+      <p className="flex items-center gap-2 font-body text-sm font-medium text-ink">
         Autenticação de dois fatores
+        <AjudaLink tema="dois-fatores" rotulo="verificação em duas etapas" />
       </p>
 
       {erro && (

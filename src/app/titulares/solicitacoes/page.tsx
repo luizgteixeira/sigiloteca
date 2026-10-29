@@ -58,7 +58,11 @@ export default async function SolicitacoesTitularPage() {
       <p className="font-body text-sm text-ink-muted">
         Solicitações enviadas pelo formulário público em{' '}
         <code className="font-mono text-xs">/titulares</code>. O retorno ao
-        titular é manual, pelo e-mail que ele informou.
+        titular é manual, pelo e-mail que ele informou.{' '}
+        <Link href="/ajuda#titulares" className="text-accent underline">
+          Prazos e como responder
+        </Link>
+        .
       </p>
 
       <SolicitacoesTitularList solicitacoes={rows} />

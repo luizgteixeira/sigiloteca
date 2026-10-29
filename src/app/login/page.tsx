@@ -124,6 +124,12 @@ export default async function LoginPage({
             Entrar
           </button>
         </form>
+
+        <p className="mt-6 text-center font-body text-sm">
+          <Link href="/ajuda" className="text-ink-muted hover:text-accent hover:underline">
+            Precisa de ajuda?
+          </Link>
+        </p>
       </div>
     </div>
   );
