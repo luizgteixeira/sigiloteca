@@ -237,8 +237,10 @@ export default function AjudaPage() {
             </li>
           </ul>
           <p>
-            Anonimização e exclusão são <strong>irreversíveis</strong> — por
-            isso o sistema pede para digitar ANONIMIZAR ou EXCLUIR.
+            Anonimização e exclusão são <strong>irreversíveis</strong>. Por
+            isso ficam separadas, no botão &ldquo;Mais ações&rdquo; de cada
+            documento, e só são confirmadas depois de digitar o título do
+            documento.
           </p>
         </Pergunta>
         <Pergunta pergunta="Por que preciso escolher um fundamento ao definir uma data de retenção?">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { formatarData } from '@/lib/datas';
 import { anonymizeDocumento, deleteDocumento } from '@/app/actions/documentos';
@@ -31,21 +31,25 @@ export type DocumentoRow = {
 
 type Acao = 'excluir' | 'anonimizar';
 
-const ACAO_CONFIG: Record<
-  Acao,
-  { palavra: string; titulo: string; verboEmAndamento: string }
-> = {
-  excluir: {
-    palavra: 'EXCLUIR',
-    titulo: 'Exclusão permanente',
-    verboEmAndamento: 'Excluindo...',
-  },
-  anonimizar: {
-    palavra: 'ANONIMIZAR',
-    titulo: 'Anonimização permanente',
-    verboEmAndamento: 'Anonimizando...',
-  },
-};
+const ACAO_CONFIG: Record<Acao, { titulo: string; verboEmAndamento: string }> =
+  {
+    excluir: {
+      titulo: 'Exclusão permanente',
+      verboEmAndamento: 'Excluindo...',
+    },
+    anonimizar: {
+      titulo: 'Anonimização permanente',
+      verboEmAndamento: 'Anonimizando...',
+    },
+  };
+
+// A confirmação pede o título do documento, não uma palavra fixa: uma
+// palavra fixa se digita no automático; o título obriga a olhar QUAL
+// documento vai ser perdido. Ignora maiúsculas e espaços repetidos, mas
+// não acentos.
+function normalizarTitulo(valor: string): string {
+  return valor.trim().replace(/\s+/g, ' ').toLocaleLowerCase('pt-BR');
+}
 
 function motivoBloqueio(documento: DocumentoRow, acao: Acao): string | null {
   const verbo = acao === 'excluir' ? 'excluído' : 'anonimizado';
@@ -75,8 +79,50 @@ export function DocumentList({
     documento: DocumentoRow;
   } | null>(null);
   const [confirmacao, setConfirmacao] = useState('');
+  // Menu "Mais ações" da linha aberta, posicionado em relação à janela
+  // (position: fixed) — a tabela tem overflow e cortaria um menu absoluto.
+  const [menu, setMenu] = useState<{
+    documento: DocumentoRow;
+    top: number;
+    right: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!menu) return;
+    const fechar = () => setMenu(null);
+    const aoTeclar = (evento: KeyboardEvent) => {
+      if (evento.key === 'Escape') fechar();
+    };
+    window.addEventListener('scroll', fechar, true);
+    window.addEventListener('resize', fechar);
+    window.addEventListener('keydown', aoTeclar);
+    return () => {
+      window.removeEventListener('scroll', fechar, true);
+      window.removeEventListener('resize', fechar);
+      window.removeEventListener('keydown', aoTeclar);
+    };
+  }, [menu]);
+
+  function abrirMenu(documento: DocumentoRow, botao: HTMLElement) {
+    if (menu?.documento.id === documento.id) {
+      setMenu(null);
+      return;
+    }
+    const rect = botao.getBoundingClientRect();
+    setMenu({
+      documento,
+      top: rect.bottom + 4,
+      right: window.innerWidth - rect.right,
+    });
+  }
+
+  const confirmacaoConfere =
+    pendente !== null &&
+    normalizarTitulo(confirmacao) ===
+      normalizarTitulo(pendente.documento.titulo);
 
   function handleAcao(acao: Acao, documento: DocumentoRow) {
+    setMenu(null);
     const bloqueio = motivoBloqueio(documento, acao);
     if (bloqueio) {
       setErrorMsg(bloqueio);
@@ -89,7 +135,7 @@ export function DocumentList({
   }
 
   async function confirmarAcao() {
-    if (!pendente || confirmacao !== ACAO_CONFIG[pendente.acao].palavra) {
+    if (!pendente || !confirmacaoConfere) {
       return;
     }
 
@@ -222,27 +268,20 @@ export function DocumentList({
                     ) : (
                       <span className="text-ink-muted">—</span>
                     )}
-                    {!documento.anonymized && (
-                      <button
-                        type="button"
-                        disabled={processandoId === documento.id}
-                        onClick={() => handleAcao('anonimizar', documento)}
-                        title="Anonimizar este documento (apaga o arquivo e o vínculo com cliente/processo/tags)"
-                        className="font-body text-sm font-medium text-ink-muted underline transition-colors hover:text-ink disabled:opacity-60"
-                      >
-                        Anonimizar
-                      </button>
-                    )}
                     <button
                       type="button"
                       disabled={processandoId === documento.id}
-                      onClick={() => handleAcao('excluir', documento)}
-                      title="Excluir permanentemente este documento"
-                      className="font-body text-sm font-medium text-danger underline transition-colors hover:text-ink disabled:opacity-60"
+                      onClick={(evento) =>
+                        abrirMenu(documento, evento.currentTarget)
+                      }
+                      aria-haspopup="menu"
+                      aria-expanded={menu?.documento.id === documento.id}
+                      className="ml-2 whitespace-nowrap rounded-md border border-line px-2 py-1 font-body text-xs text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink disabled:opacity-60"
                     >
                       {processandoId === documento.id
-                        ? 'Excluindo...'
-                        : 'Excluir permanentemente'}
+                        ? ACAO_CONFIG[pendente?.acao ?? 'excluir']
+                            .verboEmAndamento
+                        : 'Mais ações ▾'}
                     </button>
                   </div>
                 </td>
@@ -251,6 +290,49 @@ export function DocumentList({
           </tbody>
         </table>
       </div>
+      {menu && (
+        <>
+          {/* Fundo invisível: clique fora fecha o menu. */}
+          <div
+            className="fixed inset-0 z-10"
+            onClick={() => setMenu(null)}
+            aria-hidden="true"
+          />
+          <div
+            role="menu"
+            style={{ top: menu.top, right: menu.right }}
+            className="fixed z-20 flex w-64 flex-col overflow-hidden rounded-md border border-line bg-surface py-1 shadow-lg"
+          >
+            <p className="px-3 py-1.5 font-mono text-[10px] uppercase tracking-wide text-ink-muted">
+              Ações permanentes
+            </p>
+            {!menu.documento.anonymized && (
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => handleAcao('anonimizar', menu.documento)}
+                className="px-3 py-2 text-left font-body text-sm font-medium text-danger transition-colors hover:bg-danger-soft"
+              >
+                Anonimizar…
+                <span className="block text-xs font-normal text-ink-muted">
+                  Apaga o arquivo e os dados do cliente
+                </span>
+              </button>
+            )}
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => handleAcao('excluir', menu.documento)}
+              className="px-3 py-2 text-left font-body text-sm font-medium text-danger transition-colors hover:bg-danger-soft"
+            >
+              Excluir permanentemente…
+              <span className="block text-xs font-normal text-ink-muted">
+                Remove o documento por completo
+              </span>
+            </button>
+          </div>
+        </>
+      )}
       {pendente && (
         <div
           role="dialog"
@@ -299,16 +381,33 @@ export function DocumentList({
                 </>
               )}
               <p>Essa operação não pode ser desfeita.</p>
+              <p className="rounded-md bg-surface-2 px-3 py-2 text-ink-muted">
+                Quer só trocar o cliente ou corrigir algum dado?{' '}
+                <Link
+                  href={`/documentos/${pendente.documento.id}/metadados`}
+                  className="font-medium text-accent underline"
+                >
+                  Use Editar
+                </Link>{' '}
+                — nada é apagado.
+              </p>
               {errorMsg && (
                 <p className="rounded-md bg-danger-soft px-3 py-2 font-semibold text-danger">
                   {errorMsg}
                 </p>
               )}
               <label className="flex flex-col gap-1 font-mono text-xs uppercase tracking-wide text-ink-muted">
-                Digite {ACAO_CONFIG[pendente.acao].palavra} para confirmar
+                Para confirmar, digite o título do documento:{' '}
+                <span className="font-body text-sm normal-case tracking-normal text-ink">
+                  {pendente.documento.titulo}
+                </span>
                 <input
                   value={confirmacao}
                   onChange={(event) => setConfirmacao(event.target.value)}
+                  onPaste={(event) => event.preventDefault()}
+                  onDrop={(event) => event.preventDefault()}
+                  autoComplete="off"
+                  spellCheck={false}
                   autoFocus
                   className="rounded-md border border-line bg-surface-2 px-3 py-2 font-body text-sm normal-case tracking-normal text-ink"
                 />
@@ -324,10 +423,7 @@ export function DocumentList({
               </button>
               <button
                 type="button"
-                disabled={
-                  confirmacao !== ACAO_CONFIG[pendente.acao].palavra ||
-                  processandoId !== null
-                }
+                disabled={!confirmacaoConfere || processandoId !== null}
                 onClick={confirmarAcao}
                 className="rounded-md bg-danger px-3 py-2 font-body text-sm font-semibold text-surface transition-colors hover:bg-danger/85 disabled:opacity-50 disabled:hover:bg-danger"
               >
