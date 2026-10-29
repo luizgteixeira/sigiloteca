@@ -1,6 +1,10 @@
 'use server';
 
+import { headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
+import { avisarNovaSolicitacaoTitular } from '@/lib/aviso-email';
+import { formatarDataHora } from '@/lib/datas';
+import { origemPublica } from '@/lib/site-url';
 import { DIREITO_LABELS } from '@/lib/titulares';
 import type { ActionResult } from '@/app/actions/documentos';
 
@@ -42,6 +46,18 @@ export async function submeterSolicitacaoTitular(
 
   if (error) {
     return { error: 'Não foi possível registrar sua solicitação. Tente novamente.' };
+  }
+
+  // Best-effort: a solicitação já está gravada; uma falha no envio do aviso
+  // não pode virar erro para o titular.
+  try {
+    await avisarNovaSolicitacaoTitular({
+      direito: DIREITO_LABELS[direito],
+      recebidaEm: formatarDataHora(new Date()),
+      linkPainel: `${origemPublica(await headers())}/titulares/solicitacoes`,
+    });
+  } catch (erro) {
+    console.error('Falha ao enviar aviso de solicitação de titular:', erro);
   }
 
   return { error: null };
