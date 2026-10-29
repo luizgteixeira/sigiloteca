@@ -37,12 +37,12 @@ export function EditarMetadadosForm({
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [sucesso, setSucesso] = useState(false);
+  const [sucesso, setSucesso] = useState<string | null>(null);
 
   async function handleSubmit(formData: FormData) {
     setSubmitting(true);
     setErrorMsg(null);
-    setSucesso(false);
+    setSucesso(null);
 
     const tagsRaw = String(formData.get('tags') ?? '');
     const tags = tagsRaw
@@ -62,18 +62,23 @@ export function EditarMetadadosForm({
         tags,
       });
 
-      if (result.error) {
+      if (result.error !== null) {
         setErrorMsg(result.error);
         return;
       }
 
-      setSucesso(true);
+      setSucesso(
+        result.semAlteracoes
+          ? 'Nenhuma alteração para salvar — os dados já estavam assim.'
+          : 'Alterações salvas.'
+      );
       router.refresh();
     } catch (error) {
+      // Falha de rede ou servidor reiniciando (ex.: durante um deploy): a
+      // mensagem técnica do navegador ("Failed to fetch") não ajuda ninguém.
+      console.error('Falha ao salvar alterações do documento:', error);
       setErrorMsg(
-        error instanceof Error
-          ? error.message
-          : 'Erro ao salvar os metadados.'
+        'Não foi possível salvar agora. Recarregue a página (F5) e tente de novo.'
       );
     } finally {
       setSubmitting(false);
@@ -92,7 +97,7 @@ export function EditarMetadadosForm({
       )}
       {sucesso && (
         <p className="rounded-md bg-success-soft px-3 py-2 font-body text-sm text-success">
-          Metadados atualizados.
+          {sucesso}
         </p>
       )}
 
@@ -202,7 +207,7 @@ export function EditarMetadadosForm({
         disabled={submitting}
         className="mt-2 self-start rounded-md bg-accent px-4 py-2 font-body font-medium text-surface transition-colors hover:bg-accent/85 disabled:opacity-60"
       >
-        {submitting ? 'Salvando...' : 'Salvar metadados'}
+        {submitting ? 'Salvando...' : 'Salvar alterações'}
       </button>
     </form>
   );

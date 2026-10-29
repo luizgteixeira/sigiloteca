@@ -344,7 +344,7 @@ function camposDiferentes(a: unknown, b: unknown): boolean {
 // que gerar log com o antes/depois de cada campo que mudou.
 export async function updateDocumentoMetadata(
   input: UpdateDocumentoMetadataInput
-): Promise<ActionResult> {
+): Promise<ActionResult<{ semAlteracoes?: boolean }>> {
   const titulo = input.titulo.trim();
   if (!titulo) {
     return { error: 'Título é obrigatório.' };
@@ -414,7 +414,7 @@ export async function updateDocumentoMetadata(
   }
 
   if (Object.keys(alteracoes).length === 0) {
-    return { error: null };
+    return { error: null, semAlteracoes: true };
   }
 
   const { error: updateError } = await supabase

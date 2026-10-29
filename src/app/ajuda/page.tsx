@@ -258,12 +258,12 @@ export default function AjudaPage() {
             Ele está com retenção até uma data futura ou em legal hold — a
             mensagem na tela diz qual dos dois. O bloqueio vale no banco de
             dados, não só na tela, e não há como contorná-lo pelo sistema. Os
-            metadados (título, categoria, cliente, processo, área e tags)
-            continuam editáveis.
+            dados do documento (título, categoria, cliente, processo, área e
+            tags) continuam editáveis pelo botão &ldquo;Editar&rdquo;.
           </p>
           <p>
             Hoje a retenção e o legal hold são definidos no envio do documento
-            e não aparecem na edição de metadados.
+            e não aparecem na tela &ldquo;Editar&rdquo;.
           </p>
         </Pergunta>
         <Pergunta pergunta="Quando anonimizar em vez de excluir?">
@@ -310,9 +310,9 @@ export default function AjudaPage() {
         <Pergunta pergunta="Por que não consigo editar o modelo na tela?">
           <p>
             O editor de Ofícios serve para preencher cópias, não o modelo —
-            assim ninguém altera a base sem querer. Os metadados do modelo
-            (título, tags etc.) podem ser editados normalmente; só a categoria
-            fica fixa em Ofícios.
+            assim ninguém altera a base sem querer. Os dados do modelo (título,
+            tags etc.) podem ser alterados normalmente pelo botão
+            &ldquo;Editar&rdquo;; só a categoria fica fixa em Ofícios.
           </p>
         </Pergunta>
       </Tema>
@@ -391,7 +391,8 @@ export default function AjudaPage() {
         <Pergunta pergunta="O que fica registrado?">
           <p>
             Login e logout; criação, alteração, exclusão e anonimização de
-            documentos; edição de metadados (com o valor antes e depois);
+            documentos; edição dos dados de um documento (com o valor antes e
+            depois);
             cadastro, alteração e exclusão de clientes; e exportações. Cada
             registro mostra data e hora (horário de Brasília) e quem fez.
           </p>

@@ -86,8 +86,9 @@ export default async function EditarMetadadosPage({
       {retido && (
         <p className="rounded-md bg-warning-soft px-3 py-2 font-body text-sm text-ink">
           Este documento está retido ou sob preservação especial (legal
-          hold) — o conteúdo do arquivo está travado, mas os metadados
-          abaixo continuam editáveis. Toda alteração fica registrada na
+          hold) — o conteúdo do arquivo está travado, mas os dados abaixo
+          (título, categoria, cliente, processo, área e tags) continuam
+          editáveis. Toda alteração fica registrada na
           auditoria.
         </p>
       )}
