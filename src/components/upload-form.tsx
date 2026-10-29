@@ -148,6 +148,10 @@ export function UploadForm({
       });
 
       if (result.error) {
+        // O arquivo já subiu, mas o documento não foi cadastrado: apaga
+        // para não deixar um arquivo órfão no Storage, sem registro que o
+        // mostre. Best-effort — o erro mostrado é o do cadastro.
+        await supabase.storage.from('documentos').remove([storagePath]);
         setErrorMsg(result.error);
         return;
       }
@@ -263,12 +267,18 @@ export function UploadForm({
         </div>
 
         <div className="flex flex-col gap-1">
-          <label
-            htmlFor="retentionUntil"
-            className="font-mono text-xs uppercase tracking-wide text-ink-muted"
-          >
-            Reter até (opcional)
-          </label>
+          <div className="flex items-center gap-2">
+            <label
+              htmlFor="retentionUntil"
+              className="font-mono text-xs uppercase tracking-wide text-ink-muted"
+            >
+              Reter até (opcional)
+            </label>
+            <AjudaLink
+              tema="retencao"
+              rotulo="retenção, fundamento e legal hold"
+            />
+          </div>
           <input
             id="retentionUntil"
             name="retentionUntil"
@@ -306,7 +316,6 @@ export function UploadForm({
             className="size-4 accent-accent"
           />
           Preservação especial (legal hold) — bloqueia exclusão mesmo sem data de retenção
-          <AjudaLink tema="retencao" rotulo="retenção e legal hold" />
         </label>
 
         <div className="flex flex-col gap-1">
@@ -347,6 +356,7 @@ export function UploadForm({
             className="size-4 accent-accent"
           />
           Marcar como modelo padrão de Ofícios
+          <AjudaLink tema="oficios" rotulo="modelo padrão de Ofícios" />
         </label>
 
         <div className="flex flex-col gap-1">

@@ -92,6 +92,14 @@ export async function createDocumento(
   });
 
   if (error) {
+    // Índice único documento_oficio_modelo_padrao_uidx: um modelo padrão
+    // de Ofícios por escritório.
+    if (error.code === '23505' && error.message.includes('modelo_padrao')) {
+      return {
+        error:
+          'Já existe um modelo padrão de Ofícios. Envie este documento sem marcar a opção, ou exclua o modelo atual antes de cadastrar outro.',
+      };
+    }
     return { error: error.message };
   }
 
