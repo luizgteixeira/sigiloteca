@@ -54,7 +54,7 @@ export async function GET() {
   const { data: documentos, error: documentosError } = await supabase
     .from('documento')
     .select(
-      'id, titulo, categoria, cliente, processo, area, tags, is_modelo_padrao, storage_path, created_at'
+      'id, titulo, categoria, cliente, processo, area, tags, is_modelo_padrao, storage_path, anonymized, created_at'
     )
     .eq('workspace_id', workspace.id)
     .order('created_at', { ascending: true });
@@ -79,6 +79,21 @@ export async function GET() {
   let totalBytes = 0;
 
   for (const documento of documentos ?? []) {
+    // Anonimizado não tem mais arquivo no Storage (a anonimização o apaga,
+    // mas mantém storage_path) — tentar baixá-lo derrubava a exportação
+    // inteira. Entra só no manifest, como registro sem arquivo.
+    if (documento.anonymized) {
+      manifest.push({
+        arquivo: null,
+        anonimizado: true,
+        id: documento.id,
+        titulo: documento.titulo,
+        categoria: documento.categoria,
+        created_at: documento.created_at,
+      });
+      continue;
+    }
+
     const { data: file, error: downloadError } = await supabase.storage
       .from('documentos')
       .download(documento.storage_path);
