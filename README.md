@@ -41,7 +41,7 @@ Checklist do ADR-001 (fase inicial, uso individual):
 - [x] Criar o modelo padrão de Ofício e a ação "Novo a partir deste modelo" — cópia no Storage e versão inicial registrada em `documento_versao`
 - [x] Adicionar botão "Exportar tudo" (.zip) para backup local sob demanda — inclui os arquivos do Storage e um `manifest.json` com os metadados
 - [x] Controles mínimos de segurança — autenticação, RLS por workspace, Storage privado, exportação autenticada, exclusão confirmada e política de retenção (bloqueada tanto no app quanto no banco, via triggers)
-- [x] Deploy em produção: **sigiloteca.com.br** hospedado na Hostinger (plano Business, Node.js/Web Apps), deploy automático a cada push na branch `main` do repositório GitHub `luizgteixeira/sigiloteca-prod`
+- [x] Deploy em produção: **sigiloteca.com.br** hospedado na Hostinger (plano Business, Node.js/Web Apps), deploy automático a cada push na branch `main` do repositório GitHub `luizgteixeira/sigiloteca-prod` (build com `next build --webpack` — o Turbopack quebra no ambiente de build da Hostinger)
 - [x] Auditoria de segurança do código completo (controle de acesso, upload, exportação em ZIP, geração de Ofícios) — um achado real corrigido: retenção documental era checada só no app, não no banco (bypassável via REST/Storage API direta); agora há triggers Postgres bloqueando `DELETE`/`UPDATE` de documentos retidos, tanto na tabela `documento` quanto em `storage.objects`
 - [x] Preenchimento de Ofício direto na tela — "Criar e preencher" leva a um editor em tela (contador de campos `[entre colchetes]` pendentes, botão "Salvar Ofício"), sem baixar/reenviar arquivo manualmente
 - [x] Cadastro de clientes (tela `/clientes`: nome, endereço, email, celular, CPF opcional) + combobox de busca nos formulários de documento/Ofício, vinculando por `cliente_id` sem perder o campo `cliente` (texto) já usado pela busca full-text
@@ -59,7 +59,7 @@ Trabalho grande, feito em cima da Análise Jurídica da Angela e do checklist §
 - [x] **Bloqueio por tentativas de login** — 5 senhas erradas em 15 min bloqueia a conta por 15 min (por e-mail, não por IP); tela mostra tentativas restantes e o tempo real até o desbloqueio
 - [x] **Revogação de sessão/token** — "Encerrar todas as sessões" em `/conta`, via `signOut({scope:'global'})`
 - [x] **Requisitos de senha** — checklist visual ao vivo (8+ caracteres, maiúscula, minúscula, número, caractere especial), validado também no servidor (`src/lib/password.ts`); troca de senha não apaga mais os campos certos quando algum está errado (`useActionState`)
-- [x] **Fluxo de convite/onboarding** (`/auth/confirm`, `/definir-senha`) — corrige o link de convite do Supabase, que não sabia gravar cookie de sessão no domínio do app; `scripts/convidar-usuario.mjs` gera o link via Admin API sem depender do e-mail nativo do Supabase (template só editável no plano Pro)
+- [x] **Fluxo de convite/onboarding** (`/auth/confirm`, `/definir-senha`) — corrige o link de convite do Supabase, que não sabia gravar cookie de sessão no domínio do app; `scripts/convidar-usuario.mjs` gera o link via Admin API, pra você enviar por e-mail próprio com o texto que quiser
 - [x] **Rate limit em exportações** — 10 exportações/hora por workspace, reaproveitando o próprio `audit_log`
 - [x] **Edição de metadados de documento** (`/documentos/[id]/metadados`) — título, categoria, cliente, processo, área, tags editáveis mesmo em documento retido/legal hold (só o conteúdo do arquivo fica travado), com diff completo no log de auditoria
 - [x] **Anonimização de documentos** — ação manual e irreversível: apaga o arquivo e o histórico de versões do Storage, limpa cliente/processo/área/tags, mantém o registro como dado anonimizado de uso do controlador (LGPD art. 16, IV); bloqueada nas mesmas condições que a exclusão
@@ -68,9 +68,23 @@ Trabalho grande, feito em cima da Análise Jurídica da Angela e do checklist §
 - [x] **Formulário de titulares** (`/titulares`, público + `/titulares/solicitacoes`, autenticado) — qualquer pessoa (cliente cadastrado ou não) pode exercer os direitos do art. 18 da LGPD; retorno ao titular continua manual
 - [x] **Decisões jurídicas fechadas com a Angela**: comarca do foro (Belo Horizonte/MG), garantias dos suboperadores (Supabase/Cloudflare/Hostinger — redação da Cláusula 5 do contrato), segunda revisão jurídica externa (critério mantido: antes do 1º escritório-cliente pagante), normas da OAB seção 2 reestruturada (premissas técnicas vs. parecer jurídico separados)
 
+### Redefinição de senha, fuso horário e deploy (15/10/2026)
+
+Pedidos da Angela depois do uso real: horário errado na auditoria e nenhuma forma de recuperar a senha esquecida.
+
+- [x] **Fuso horário fixo em Brasília** — datas eram formatadas no servidor da Hostinger (outro fuso), deslocando os horários da auditoria; agora `src/lib/datas.ts` (`formatarDataHora`/`formatarData`, `America/Sao_Paulo`) é usado em todas as telas — registros antigos também aparecem certos, nada mudou no banco
+- [x] **"Esqueceu sua senha?"** — link na tela de login → `/esqueci-senha` (resposta idêntica exista ou não a conta) → e-mail → `/auth/confirm` → `/definir-senha` ("Crie uma nova senha"); contas com MFA passam pelo código do autenticador antes; o acesso pelo link fica registrado na auditoria como login "pelo link de redefinição de senha"
+- [x] **E-mail de autenticação via SMTP próprio** — Supabase configurado com uma caixa de e-mail real da Hostinger (alias não autentica: dá erro `535`); o template "Reset Password" aponta direto pra `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/definir-senha`, sem depender do redirecionamento do Supabase nem de abrir no mesmo navegador
+- [x] **Endereço público atrás do proxy** — na Hostinger `request.url` é `http://0.0.0.0:3000`; links e redirecionamentos usam `origemPublica()` (`src/lib/site-url.ts`): `NEXT_PUBLIC_SITE_URL` → `x-forwarded-host`/`host` → `localhost`
+- [x] **Correções de fluxo** — link de e-mail inválido/usado/expirado mostra mensagem própria (antes: "Email ou senha inválidos"); o redirecionamento pro 2FA não carrega mais a query da rota anterior (antes a tela abria com "Código inválido" sem código digitado)
+- [x] **Next.js 16.3.1 → 16.3.8** — corrige 6 vulnerabilidades apontadas pela Hostinger (3 críticas); `npm audit --omit=dev` sem vulnerabilidades
+- [x] **Migração 16 aplicada em produção (29/10)** — conferido no banco que a 16 não tinha rodado (o log ainda era limpo após 12 meses); aplicada via SQL Editor e confirmado `interval '3 years'`. As migrações 11–15 já estavam aplicadas
+
 **Ainda pendente** (ver `status-execucao-sigiloteca.md` para o detalhe completo): upgrade do plano Supabase (decisão de orçamento do Luiz), teste de restauração de backup, teste de incidente simulado, mecanismo de busca para titulares não cadastrados como cliente (aguardando processo da Angela), formalização por escrito da Política de Backup/Termos de Uso/Política de acesso mínimo (mérito já decidido, falta só redigir).
 
-- [ ] **← PRÓXIMO PASSO**: rodar as migrações `20260910000011`–`20260910000016` em produção (se ainda não rodadas), validar o fluxo de convite e o MFA com um usuário real, e seguir com os itens "ainda pendente" acima antes de abrir cadastro para o primeiro escritório-cliente pagante.
+- [x] Migrações `20260910000011`–`20260910000016` conferidas e aplicadas em produção (29/10/2026). Como foram rodadas pelo SQL Editor, o histórico de migrações do Supabase fica vazio — para conferir, olhe direto as tabelas/funções.
+- [x] MFA e fluxo de e-mail (`/auth/confirm` → `/definir-senha`) validados com usuário real em produção, via redefinição de senha (15/10/2026)
+- [ ] **← PRÓXIMO PASSO**: seguir com os itens "ainda pendente" acima antes de abrir cadastro para o primeiro escritório-cliente pagante.
 
 ## O que já existe neste repositório
 
@@ -115,8 +129,9 @@ sigiloteca/
 │   │   ├── page.tsx        Dashboard: upload, filtro/busca, lista de documentos
 │   │   ├── layout.tsx      Fontes da marca + InactivityGuard (logout automático)
 │   │   ├── login/          Login (email+senha) + bloqueio por tentativas; login/mfa/ = desafio de segundo fator
-│   │   ├── auth/confirm/   Troca token de e-mail (convite) por sessão de verdade (verifyOtp)
-│   │   ├── definir-senha/  Primeiro acesso após convite — define senha sem pedir a atual
+│   │   ├── auth/confirm/   Troca token de e-mail (convite/recuperação) por sessão (verifyOtp ou code PKCE)
+│   │   ├── esqueci-senha/  Pedido de link de redefinição de senha (público)
+│   │   ├── definir-senha/  Nova senha sem pedir a atual — após convite ou link de recuperação (cookie de 10 min)
 │   │   ├── conta/          Senha (com checklist de requisitos), MFA, encerrar todas as sessões
 │   │   ├── clientes/       Cadastro de clientes (criar, editar, excluir com confirmação digitada)
 │   │   ├── documentos/[id]/editar/     Editor de Ofício em tela (preencher + salvar)
@@ -134,6 +149,8 @@ sigiloteca/
 │   │                       SolicitacaoTitularForm, SolicitacoesTitularList
 │   └── lib/
 │       ├── supabase/       client.ts, server.ts, middleware.ts (sessão + MFA + rotas públicas)
+│       ├── datas.ts        Formatação de data/hora sempre no fuso de Brasília
+│       ├── site-url.ts     origemPublica(): endereço público do site atrás do proxy da Hostinger
 │       ├── workspace.ts    getOrCreateWorkspace (bootstrap do workspace único)
 │       ├── audit-log.ts    Labels e descrição legível dos eventos de auditoria
 │       ├── password.ts     Requisitos de senha compartilhados (checklist + validação no servidor)
@@ -151,10 +168,11 @@ sigiloteca/
 | Frontend | Next.js | Web hoje, caminho aberto pra PWA depois |
 | Backend + Auth | Supabase (Postgres) | RLS nativo já isola dados por workspace desde o dia 1 |
 | Arquivos — documentos | Supabase Storage | PDFs, DOCX, RG/certidões escaneadas |
-| Arquivos — geoespaciais/grandes | Cloudflare R2 | Sem custo de egress, mais barato pra `.dwg`/`.shp`/mapas grandes |
+| Arquivos — geoespaciais/grandes | Cloudflare R2 (**planejado, ainda não implementado** — hoje tudo vai pro Supabase Storage) | Sem custo de egress, mais barato pra `.dwg`/`.shp`/mapas grandes |
 | Busca | Postgres full-text search | Suficiente pro volume do MVP |
 | Backup local | Botão "Exportar tudo" (.zip) | Nuvem é a fonte oficial; local é só cópia sob demanda, com rate limit |
-| Hospedagem | Hostinger (plano Business, Web Apps/Node.js) | Deploy automático via GitHub (`luizgteixeira/sigiloteca-prod`, branch `main`) |
+| Hospedagem | Hostinger (plano Business, Web Apps/Node.js) | Deploy automático via GitHub (`luizgteixeira/sigiloteca-prod`, branch `main`); build com `--webpack` |
+| E-mail de autenticação | SMTP próprio (caixa da Hostinger) no Supabase | Envio padrão do Supabase só entrega pra membros da equipe; SMTP próprio também libera editar os templates |
 | Domínio | sigiloteca.com.br | SSL/HTTPS ativo; CDN da Hostinger mantido **desligado** (fazia cache full-page ignorando sessão) |
 
 Hospedagem e domínio: por conta do desenvolvedor (Luiz), sem custo adicional pra cliente nesta fase.
