@@ -86,7 +86,7 @@ export default async function EditarOficioPage({
         </div>
         <Link
           href="/"
-          className="rounded-md border border-line bg-surface px-3 py-2 font-body text-sm text-ink shadow-sm transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent"
+          className="shrink-0 whitespace-nowrap rounded-md border border-line bg-surface px-3 py-2 font-body text-sm text-ink shadow-sm transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent"
         >
           ← Voltar
         </Link>

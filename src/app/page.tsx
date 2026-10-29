@@ -109,7 +109,9 @@ export default async function Home({
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-4 py-8">
-      <header className="flex items-center justify-between border-b border-line pb-5">
+      {/* No celular, logo em cima e botões embaixo, quebrando em várias
+          linhas; lado a lado só a partir de telas largas. */}
+      <header className="flex flex-col gap-4 border-b border-line pb-5 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-3">
           <Image
             src="/sigiloteca-icon.svg"
@@ -127,52 +129,55 @@ export default async function Home({
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <nav
+          aria-label="Menu principal"
+          className="flex flex-wrap items-center gap-2 sm:gap-3"
+        >
           <Link
             href="/clientes"
-            className="rounded-md border border-line bg-surface px-3 py-2 font-body text-sm text-ink shadow-sm transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent"
+            className="whitespace-nowrap rounded-md border border-line bg-surface px-3 py-2 font-body text-sm text-ink shadow-sm transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent"
           >
             Clientes
           </Link>
           <Link
             href="/auditoria"
-            className="rounded-md border border-line bg-surface px-3 py-2 font-body text-sm text-ink shadow-sm transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent"
+            className="whitespace-nowrap rounded-md border border-line bg-surface px-3 py-2 font-body text-sm text-ink shadow-sm transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent"
           >
             Auditoria
           </Link>
           <Link
             href="/titulares/solicitacoes"
-            className="rounded-md border border-line bg-surface px-3 py-2 font-body text-sm text-ink shadow-sm transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent"
+            className="whitespace-nowrap rounded-md border border-line bg-surface px-3 py-2 font-body text-sm text-ink shadow-sm transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent"
           >
             Titulares
           </Link>
           <Link
             href="/conta"
-            className="rounded-md border border-line bg-surface px-3 py-2 font-body text-sm text-ink shadow-sm transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent"
+            className="whitespace-nowrap rounded-md border border-line bg-surface px-3 py-2 font-body text-sm text-ink shadow-sm transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent"
           >
             Minha conta
           </Link>
           <Link
             href="/ajuda"
-            className="rounded-md border border-line bg-surface px-3 py-2 font-body text-sm text-ink shadow-sm transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent"
+            className="whitespace-nowrap rounded-md border border-line bg-surface px-3 py-2 font-body text-sm text-ink shadow-sm transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent"
           >
             Ajuda
           </Link>
           <a
             href="/api/exportar"
-            className="rounded-md border border-line bg-surface px-3 py-2 font-body text-sm text-ink shadow-sm transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent"
+            className="whitespace-nowrap rounded-md border border-line bg-surface px-3 py-2 font-body text-sm text-ink shadow-sm transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent"
           >
             Exportar tudo
           </a>
           <form action={signOut}>
             <button
               type="submit"
-              className="rounded-md border border-line bg-surface px-3 py-2 font-body text-sm text-ink shadow-sm transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent"
+              className="whitespace-nowrap rounded-md border border-line bg-surface px-3 py-2 font-body text-sm text-ink shadow-sm transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent"
             >
               Sair
             </button>
           </form>
-        </div>
+        </nav>
       </header>
 
       <UploadForm workspaceId={workspace.id} clientes={clientes} />
