@@ -83,7 +83,7 @@ Pedidos da Angela depois do uso real: horário errado na auditoria e nenhuma for
 
 - [x] **Migração 16 aplicada em produção** — conferido no banco que a 16 não tinha rodado (o log ainda era limpo após 12 meses); aplicada via SQL Editor e confirmado `interval '3 years'`. As migrações 11–15 já estavam aplicadas
 - [x] **Supabase Pro** — backup diário (7 dias, só banco; arquivos do Storage continuam dependendo do "Exportar tudo"), "Prevent use of leaked passwords" ligado e "Inactivity timeout" de 2h no servidor, reforçando o logout por inatividade do app
-- [x] **Formulários de senha** (Minha conta e `/definir-senha`) — recusa do Supabase traduzida (`motivoRecusaSenha`: "senha aparece em vazamentos", "precisa ser diferente da atual") em vez de erro genérico; "Salvar" desabilitado até cumprir todos os requisitos e a confirmação bater; colar/arrastar bloqueado em "Confirmar nova senha"; requisito cumprido destacado (fundo verde-claro, negrito, ícone preenchido)
+- [x] **Formulários de senha** (Minha conta e `/definir-senha`) — recusa do Supabase traduzida (`motivoRecusaSenha`: "senha aparece em vazamentos", "precisa ser diferente da atual") em vez de erro genérico; "Salvar" desabilitado até cumprir todos os requisitos e a confirmação bater; colar/arrastar bloqueado em "Confirmar nova senha"; requisito cumprido destacado (fundo verde-claro, negrito, ícone preenchido); senha atual (login e "Senha atual" em Minha conta) sem botão "Mostrar" — o navegador preenche a senha salva sozinho e a tela pode ficar aberta num computador do escritório; campos de senha nova mantêm o botão
 - [x] **Troca de senha não derruba mais o 2FA** — a conferência da senha atual usa um cliente Supabase isolado (sem cookies); antes ela substituía a sessão aal2 por uma aal1 e o usuário voltava pro desafio de MFA
 - [x] **Página de ajuda** (`/ajuda`, pública e liberada também no meio do desafio de 2FA) — só as dúvidas difíceis: 2FA (inclusive celular perdido, com contato do responsável técnico), senha, retenção/legal hold/anonimização/exclusão, titulares, exportação e auditoria; link "Ajuda" no menu, no login e na tela do código; "?" (`AjudaLink`) ao lado do legal hold e do 2FA. **Textos de Retenção e Titulares aguardam revisão da Angela**
 - [x] **Aviso por e-mail de solicitação de titular** — o formulário público dispara e-mail (nodemailer, `src/lib/aviso-email.ts`, mesmo SMTP do Supabase) para `AVISO_TITULARES_PARA` com o direito pedido, a data e o link do painel — sem nome, e-mail, CPF ou descrição do titular. Best-effort: sem as variáveis `SMTP_*` ou com falha no envio, a solicitação é registrada normalmente
@@ -174,8 +174,9 @@ sigiloteca/
 │   ├── components/         UploadForm, NewOficioForm, DocumentList, OficioEditor, ClienteForm, ClienteList,
 │   │                       ClienteCombobox, InactivityGuard, MfaManager, ChangePasswordForm,
 │   │                       PasswordRequisitosChecklist, SenhaInicialForm, EditarMetadadosForm,
-│   │                       SolicitacaoTitularForm, SolicitacoesTitularList, PasswordField (sem "Mostrar" na senha atual; bloqueia colar na
-│   │                       confirmação), AjudaLink ("?" para /ajuda), VoltarAoTopo
+│   │                       SolicitacaoTitularForm, SolicitacoesTitularList, PasswordField (sem "Mostrar"
+│   │                       na senha atual; bloqueia colar na confirmação), AjudaLink ("?" para /ajuda),
+│   │                       VoltarAoTopo
 │   └── lib/
 │       ├── supabase/       client.ts, server.ts, middleware.ts (sessão + MFA + rotas públicas)
 │       ├── datas.ts        Formatação de data/hora sempre no fuso de Brasília
