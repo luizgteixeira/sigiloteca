@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { RETENTION_BASIS_OPTIONS } from '@/lib/retention';
+import { VoltarAoTopo } from '@/components/voltar-ao-topo';
 
 // Ajuda só para os pontos que costumam travar — não é um manual do site
 // inteiro (esse é o manual em PDF). Página pública: parte das dúvidas
@@ -55,7 +56,11 @@ function Pergunta({
 export default function AjudaPage() {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-8">
-      <header className="flex items-center justify-between border-b border-line pb-5">
+      <header
+        id="topo"
+        tabIndex={-1}
+        className="flex items-center justify-between border-b border-line pb-5 outline-none"
+      >
         <div className="flex items-center gap-3">
           <Image
             src="/sigiloteca-icon.svg"
@@ -359,6 +364,8 @@ export default function AjudaPage() {
           </p>
         </Pergunta>
       </Tema>
+
+      <VoltarAoTopo />
     </div>
   );
 }

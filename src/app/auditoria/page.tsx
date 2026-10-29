@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { formatarDataHora } from '@/lib/datas';
+import { VoltarAoTopo } from '@/components/voltar-ao-topo';
 import { getOrCreateWorkspace } from '@/lib/workspace';
 import {
   AUDIT_ACTION_LABELS,
@@ -34,7 +35,11 @@ export default async function AuditoriaPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-4 py-8">
-      <header className="flex items-center justify-between border-b border-line pb-5">
+      <header
+        id="topo"
+        tabIndex={-1}
+        className="flex items-center justify-between border-b border-line pb-5 outline-none"
+      >
         <div className="flex items-center gap-3">
           <Image
             src="/sigiloteca-icon.svg"
@@ -116,6 +121,8 @@ export default async function AuditoriaPage() {
           </table>
         </div>
       )}
+
+      <VoltarAoTopo />
     </div>
   );
 }
