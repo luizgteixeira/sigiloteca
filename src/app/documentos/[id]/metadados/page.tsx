@@ -71,7 +71,7 @@ export default async function EditarMetadadosPage({
               {documento.titulo}
             </p>
             <p className="font-body text-sm text-ink-muted">
-              Editar metadados · Sigiloteca
+              Editar documento · Sigiloteca
             </p>
           </div>
         </div>

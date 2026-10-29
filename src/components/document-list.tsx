@@ -195,16 +195,18 @@ export function DocumentList({
                     !documento.anonymized ? (
                       <Link
                         href={`/documentos/${documento.id}/editar`}
+                        title="Preencher o texto do Ofício"
                         className="font-body text-sm font-medium text-accent underline transition-colors hover:text-ink"
                       >
-                        Editar
+                        Preencher
                       </Link>
                     ) : null}
                     <Link
                       href={`/documentos/${documento.id}/metadados`}
+                      title="Editar título, categoria, cliente, processo, área e tags"
                       className="font-body text-sm font-medium text-accent underline transition-colors hover:text-ink"
                     >
-                      Metadados
+                      Editar
                     </Link>
                     {documento.anonymized ? (
                       <span className="text-ink-muted">—</span>
