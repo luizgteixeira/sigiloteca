@@ -91,6 +91,19 @@ Pedidos da Angela depois do uso real: horário errado na auditoria e nenhuma for
 - [x] **Interface** — "Baixar" abre em nova aba; "Sua conta" virou "Minha conta"; botão flutuante "voltar ao início" (`VoltarAoTopo`) na Ajuda e na Auditoria
 - [x] **Next.js 16.3.8 → 16.4.3** — corrige uma RCE crítica na otimização de imagens com SVG, um DoS via Server Actions e uma RCE em `use cache`, além do zod; `npm audit` sem vulnerabilidades (inclusive dependências de desenvolvimento)
 
+### Escritório com várias pessoas — fase 1 (29/10/2026)
+
+Várias pessoas no mesmo escritório, cada uma com um papel. Migração `20261029000017_equipe_escritorio` (aplicada pelo SQL Editor — o conector MCP recusou o `apply_migration`).
+
+- [x] **`workspace_membro`** (escritório, usuário, e-mail, papel; cada pessoa em um único escritório). Todas as regras de acesso — documento, versões, cliente, auditoria, arquivos do Storage, titulares — passaram de "dono do escritório" (`owner_id`) para "membro", via `eh_membro()`/`eh_admin()`/`papel_do_usuario()` (security definer). `workspace.owner_id` ficou só como histórico
+- [x] **Papéis** (`src/lib/permissoes.ts`, espelhado no banco): **Administrador** (tudo, inclusive equipe, auditoria, exportar, excluir/anonimizar documentos, excluir clientes) · **Advogado** (documentos, clientes e titulares) · **Assistente** (documentos e clientes). O que o papel não permite some da tela, é recusado na server action e no banco (policies de delete só para admin; trigger impede não-admin de anonimizar)
+- [x] **Tela Equipe** (`/equipe`, só administrador): convidar por e-mail (service role cria a conta + e-mail pelo SMTP da Hostinger; sem SMTP, a tela mostra o link para repassar), trocar papel, remover, renomear o escritório. Trigger impede deixar o escritório sem administrador; ninguém remove a si mesmo. Eventos `member_invite`/`member_role_change`/`member_remove` na auditoria
+- [x] **Sem escritório** (removido da equipe ou conta sem convite): tela própria, nada do escritório aparece. `getEscritorio` substituiu `getOrCreateWorkspace` — o app não cria mais escritório sozinho
+- [x] **Correção de segurança:** a inclusão em `audit_log` não conferia se o evento era do escritório de quem grava; agora exige ser membro
+- [x] **Dados de produção:** o escritório `7ef92a7f…` (que tinha os 3 documentos, o cliente e o histórico) virou o oficial, com Angela e Luiz como administradores (Luiz até a Angela decidir, pela política de acesso mínimo); o escritório vazio da Angela ficou sem membros e seus 3 eventos de auditoria foram movidos para o oficial. Feito direto no banco, fora do repositório (espelho público). Testado simulando administrador, assistente e conta sem escritório
+- [ ] **Pendente:** `SUPABASE_SERVICE_ROLE_KEY` nas variáveis de ambiente da Hostinger (sem ela a tela Equipe avisa que convites não estão configurados); renomear o escritório (hoje leva o e-mail do Luiz); Angela decidir se o Luiz continua administrador
+- **Fase 2 (vários escritórios):** cadastro de escritório novo, formulário de titulares por escritório (`solicitacao_titular` ainda não tem `workspace_id` — hoje administradores e advogados de qualquer escritório veem todas), uma pessoa em mais de um escritório, cobrança
+
 **Ainda pendente** (ver `status-execucao-sigiloteca.md` para o detalhe completo): teste de restauração de backup (agora viável: plano Supabase Pro desde 29/10/2026, com backup diário), revisão pela Angela dos textos de Retenção e Titulares da página `/ajuda`, teste de incidente simulado, mecanismo de busca para titulares não cadastrados como cliente (aguardando processo da Angela), formalização por escrito da Política de Backup/Termos de Uso/Política de acesso mínimo (mérito já decidido, falta só redigir).
 
 - [x] Migrações `20260910000011`–`20260910000016` conferidas e aplicadas em produção (29/10/2026). Como foram rodadas pelo SQL Editor, o histórico de migrações do Supabase fica vazio — para conferir, olhe direto as tabelas/funções.
@@ -133,7 +146,8 @@ sigiloteca/
 │       ├── 20260910000013_metadados_documento_audit.sql Evento document_metadata_update
 │       ├── 20260910000014_anonimizacao_documento.sql    Coluna documento.anonymized + evento document_anonymize
 │       ├── 20260910000015_titulares_solicitacoes.sql    Tabela solicitacao_titular (RLS pública pra INSERT)
-│       └── 20260910000016_retencao_audit_log_3_anos.sql Retenção do audit_log de 12 meses para 3 anos
+│       ├── 20260910000016_retencao_audit_log_3_anos.sql Retenção do audit_log de 12 meses para 3 anos
+│       └── 20261029000017_equipe_escritorio.sql        Membros e papéis do escritório + todas as regras de acesso por membro
 ├── src/
 │   ├── proxy.ts           Sessão + proteção de rotas + step-up de MFA (convenção Next 16, era middleware.ts)
 │   ├── app/
@@ -165,7 +179,8 @@ sigiloteca/
 │       ├── datas.ts        Formatação de data/hora sempre no fuso de Brasília
 │       ├── site-url.ts     origemPublica(): endereço público do site atrás do proxy da Hostinger
 │       ├── aviso-email.ts  E-mail do próprio app (aviso de solicitação de titular) via SMTP da Hostinger
-│       ├── workspace.ts    getOrCreateWorkspace (bootstrap do workspace único)
+│       ├── workspace.ts    getEscritorio (escritório + papel do usuário) e verificarPermissao
+│       ├── permissoes.ts   Matriz de papéis (administrador/advogado/assistente)
 │       ├── audit-log.ts    Labels e descrição legível dos eventos de auditoria
 │       ├── password.ts     Requisitos de senha (checklist + validação no servidor) + motivoRecusaSenha
 │       ├── retention.ts    Opções de fundamento jurídico de retenção
@@ -196,6 +211,7 @@ Hospedagem e domínio: por conta do desenvolvedor (Luiz), sem custo adicional pr
 
 ```text
 Workspace (o escritório da cliente)
+  → Membro (pessoa da equipe + papel: administrador, advogado ou assistente)
   → Categoria (uma das 6 abaixo)
     → Documento (arquivo + cliente, processo, área, tags, fundamento de retenção, legal hold, anonimização)
       → Versão (histórico — usado pelos modelos que evoluem, ex: Ofício)
@@ -219,7 +235,7 @@ Solicitacao_titular (pedidos do formulário público de direitos LGPD — sem wo
 
 ### Regras importantes pro schema
 
-- Tudo isolado por `workspace_id` via Row Level Security do Supabase, mesmo com um único usuário hoje — é isso que permite abrir pra outros escritórios depois sem reescrever nada. Exceção deliberada: `solicitacao_titular` (formulário público de titulares) não tem `workspace_id`, porque o Sigiloteca hoje serve um único escritório por instalação.
+- Tudo isolado por `workspace_id` via Row Level Security do Supabase, e o acesso é por ser membro do escritório (`workspace_membro`), não por ser dono — é isso que permite abrir pra outros escritórios depois sem reescrever nada. Exceção deliberada: `solicitacao_titular` (formulário público de titulares) não tem `workspace_id`, porque o Sigiloteca hoje serve um único escritório por instalação.
 - Documentos de arquivos grandes/geoespaciais devem guardar qual provedor de storage foi usado (Supabase Storage vs R2), já que são dois buckets diferentes.
 - Categoria "Ofícios" precisa de um campo/flag pra marcar qual documento é o "modelo padrão" da categoria.
 - Retenção não é um prazo único: cada documento retido precisa de `retention_basis` (fundamento jurídico) explícito — o sistema não presume motivo sozinho, quem decide é o escritório/controlador.
@@ -234,9 +250,9 @@ Já importado em `src/app/globals.css` e aplicado em todas as telas reais. Resum
 
 ## Fora de escopo nesta fase
 
-A cliente autorizou a comercialização (10/09/2026), mas a infraestrutura técnica de multiusuário/multi-tenant ainda não foi construída — a autorização é uma decisão de negócio, não implica que estes itens já existam:
+A cliente autorizou a comercialização (10/09/2026). Várias pessoas no mesmo escritório, com papéis, já existe (fase 1, 29/10/2026); ainda não existem:
 
-- Login separado por usuário dentro do mesmo escritório (planos, papéis de acesso, cobrança)
+- Vários escritórios na mesma instalação (cadastro de escritório, titulares por escritório, planos e cobrança) — fase 2
 - Aplicativo mobile nativo
 - Classificação automática de documentos por IA/OCR
 - Assinatura eletrônica de documentos
