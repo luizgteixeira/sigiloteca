@@ -29,6 +29,11 @@ export function PasswordField({
   const [preenchidaPeloNavegador, setPreenchidaPeloNavegador] = useState(false);
 
   function marcarAutopreenchimento() {
+    // Só protege senha que já existe (login, senha atual). Em campo de
+    // senha nova, o que o navegador preenche é a senha forte que ele acabou
+    // de sugerir — ver o que foi gerado ajuda, e não há segredo antigo a
+    // proteger.
+    if (autoComplete !== 'current-password') return;
     setPreenchidaPeloNavegador(true);
     setVisible(false);
   }
