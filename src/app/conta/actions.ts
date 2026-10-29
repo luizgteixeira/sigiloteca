@@ -1,6 +1,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { createClient as createIsolatedClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { logAuditEvent } from '@/app/actions/audit';
 import {
@@ -44,7 +45,15 @@ export async function updatePassword(
 
   // Reautentica com a senha atual antes de trocar — evita que alguém com uma
   // sessão aberta (ex: computador compartilhado) troque a senha sem sabê-la.
-  const { error: reauthError } = await supabase.auth.signInWithPassword({
+  // Usa um cliente à parte, sem cookies: fazer o login de conferência no
+  // cliente da sessão trocava a sessão aal2 (com MFA) por uma aal1 nova, e
+  // o usuário era mandado de volta pro desafio de segundo fator.
+  const conferencia = createIsolatedClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { auth: { persistSession: false, autoRefreshToken: false } }
+  );
+  const { error: reauthError } = await conferencia.auth.signInWithPassword({
     email: user.email,
     password: senhaAtual,
   });
@@ -52,6 +61,8 @@ export async function updatePassword(
   if (reauthError) {
     return { erro: 'atual', resetToken: state.resetToken };
   }
+  // Descarta a sessão criada só para conferir a senha.
+  await conferencia.auth.signOut({ scope: 'local' });
 
   const { error: updateError } = await supabase.auth.updateUser({
     password: novaSenha,
