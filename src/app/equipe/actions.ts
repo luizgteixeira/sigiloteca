@@ -19,7 +19,24 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 type ResultadoConvite = {
   linkManual?: string;
   motivoEmail?: 'nao_configurado' | 'falha';
+  // Código técnico da falha (ex.: "EAUTH 535", "ETIMEDOUT"), para o
+  // administrador repassar ao suporte sem precisar abrir os logs da
+  // Hostinger. Só códigos — nunca a mensagem inteira do servidor.
+  detalheEmail?: string;
 };
+
+function codigoDaFalha(erro: unknown): string | undefined {
+  if (!erro || typeof erro !== 'object') return undefined;
+  const { code, responseCode, command } = erro as {
+    code?: unknown;
+    responseCode?: unknown;
+    command?: unknown;
+  };
+  const partes = [code, responseCode, command]
+    .filter((parte) => typeof parte === 'string' || typeof parte === 'number')
+    .map(String);
+  return partes.length > 0 ? partes.join(' ').slice(0, 60) : undefined;
+}
 
 async function enviarOuDevolverLink(
   para: string,
@@ -39,7 +56,9 @@ async function enviarOuDevolverLink(
     return {};
   } catch (erro) {
     console.error('Falha ao enviar e-mail de convite:', erro);
-    return link ? { linkManual: link, motivoEmail: 'falha' } : {};
+    return link
+      ? { linkManual: link, motivoEmail: 'falha', detalheEmail: codigoDaFalha(erro) }
+      : {};
   }
 }
 

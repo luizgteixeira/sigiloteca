@@ -24,12 +24,13 @@ export type MembroRow = {
 
 function avisoSemEmail(
   email: string,
-  motivo: 'nao_configurado' | 'falha' | undefined
+  motivo: 'nao_configurado' | 'falha' | undefined,
+  detalhe?: string
 ): string {
   const porque =
     motivo === 'nao_configurado'
       ? 'o envio de e-mails ainda não está configurado no servidor'
-      : 'o servidor de e-mail recusou o envio';
+      : `o servidor de e-mail recusou o envio${detalhe ? ` (código: ${detalhe})` : ''}`;
   return `Não foi possível mandar o e-mail para ${email}: ${porque}. Copie o link abaixo e envie você mesmo (WhatsApp, e-mail pessoal).`;
 }
 
@@ -79,7 +80,9 @@ export function EquipeGerenciar({
       }
       if (resultado.linkManual) {
         setLinkManual(resultado.linkManual);
-        setAviso(avisoSemEmail(membro.email, resultado.motivoEmail));
+        setAviso(
+          avisoSemEmail(membro.email, resultado.motivoEmail, resultado.detalheEmail)
+        );
       } else {
         setAviso(`Novo link de convite enviado para ${membro.email}.`);
       }
@@ -129,7 +132,7 @@ export function EquipeGerenciar({
       }
       if (resultado.linkManual) {
         setLinkManual(resultado.linkManual);
-        setAviso(avisoSemEmail(email, resultado.motivoEmail));
+        setAviso(avisoSemEmail(email, resultado.motivoEmail, resultado.detalheEmail));
       } else if (resultado.jaTinhaConta) {
         setAviso(`${email} já tinha conta e foi incluído(a) na equipe. Avisamos por e-mail.`);
       } else {
