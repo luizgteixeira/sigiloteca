@@ -9,6 +9,9 @@ const ERROR_MESSAGES: Record<string, string> = {
   atual: 'Senha atual incorreta.',
   confirmacao: 'A confirmação não bate com a nova senha.',
   fraca: 'A nova senha não atende aos requisitos abaixo.',
+  vazada:
+    'Essa senha aparece em vazamentos de dados conhecidos. Escolha outra.',
+  igual: 'A nova senha precisa ser diferente da atual.',
   servidor: 'Não foi possível trocar a senha. Tente novamente.',
 };
 

@@ -3,10 +3,14 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { logAuditEvent } from '@/app/actions/audit';
-import { senhaAtendeRequisitos } from '@/lib/password';
+import {
+  motivoRecusaSenha,
+  senhaAtendeRequisitos,
+  type MotivoRecusaSenha,
+} from '@/lib/password';
 
 export type UpdatePasswordState = {
-  erro?: 'atual' | 'confirmacao' | 'fraca' | 'servidor';
+  erro?: 'atual' | 'confirmacao' | 'fraca' | MotivoRecusaSenha;
   sucesso?: boolean;
   // Só muda (e limpa os campos) quando a troca dá certo — um erro devolve o
   // mesmo valor, o que mantém tudo que o usuário já tinha digitado na tela
@@ -54,7 +58,10 @@ export async function updatePassword(
   });
 
   if (updateError) {
-    return { erro: 'servidor', resetToken: state.resetToken };
+    return {
+      erro: motivoRecusaSenha(updateError.code),
+      resetToken: state.resetToken,
+    };
   }
 
   return { sucesso: true, resetToken: state.resetToken + 1 };

@@ -3,7 +3,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { senhaAtendeRequisitos } from '@/lib/password';
+import { motivoRecusaSenha, senhaAtendeRequisitos } from '@/lib/password';
 import { logAuditEvent } from '@/app/actions/audit';
 
 export async function setInitialPassword(formData: FormData) {
@@ -34,7 +34,7 @@ export async function setInitialPassword(formData: FormData) {
 
   const { error } = await supabase.auth.updateUser({ password: novaSenha });
   if (error) {
-    redirect('/definir-senha?erro=servidor');
+    redirect(`/definir-senha?erro=${motivoRecusaSenha(error.code)}`);
   }
 
   // A sessão aberta pelo link de recuperação não passa por signIn(), então

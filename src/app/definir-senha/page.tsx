@@ -7,6 +7,9 @@ import { SenhaInicialForm } from '@/components/senha-inicial-form';
 const ERROR_MESSAGES: Record<string, string> = {
   confirmacao: 'A confirmação não bate com a nova senha.',
   fraca: 'A senha não atende aos requisitos.',
+  vazada:
+    'Essa senha aparece em vazamentos de dados conhecidos. Escolha outra.',
+  igual: 'A nova senha precisa ser diferente da atual.',
   servidor: 'Não foi possível salvar a senha. Tente novamente.',
 };
 

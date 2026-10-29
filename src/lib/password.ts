@@ -23,3 +23,16 @@ export const REQUISITOS_SENHA: RequisitoSenha[] = [
 export function senhaAtendeRequisitos(senha: string): boolean {
   return REQUISITOS_SENHA.every((requisito) => requisito.atende(senha));
 }
+
+// Traduz a recusa do Supabase ao gravar a senha nova. Com "Prevent use of
+// leaked passwords" ligado, senhas que aparecem em vazamentos conhecidos
+// voltam como weak_password mesmo cumprindo os requisitos acima.
+export type MotivoRecusaSenha = 'vazada' | 'igual' | 'servidor';
+
+export function motivoRecusaSenha(
+  code: string | undefined
+): MotivoRecusaSenha {
+  if (code === 'weak_password') return 'vazada';
+  if (code === 'same_password') return 'igual';
+  return 'servidor';
+}
