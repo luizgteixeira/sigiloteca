@@ -1,5 +1,13 @@
 import nodemailer from 'nodemailer';
 
+// Remetente dos e-mails. Em serviços transacionais (Resend, Brevo) o
+// usuário do SMTP não é um e-mail (no Resend é literalmente "resend"),
+// então o endereço vem de SMTP_FROM; sem ela, vale o próprio SMTP_USER
+// (caixa de e-mail comum).
+function remetente(): string {
+  return process.env.SMTP_FROM || process.env.SMTP_USER || '';
+}
+
 // Envio de e-mails do próprio app (não os de autenticação, que saem pelo
 // SMTP configurado no painel do Supabase). Usa a mesma caixa da Hostinger.
 // Sem as variáveis SMTP_* / AVISO_TITULARES_PARA configuradas, não envia
@@ -35,7 +43,7 @@ export async function enviarEmail(mensagem: {
     auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
   });
   await transporte.sendMail({
-    from: `Sigiloteca <${process.env.SMTP_USER}>`,
+    from: `Sigiloteca <${remetente()}>`,
     to: mensagem.para,
     subject: mensagem.assunto,
     text: mensagem.texto,
@@ -76,7 +84,7 @@ export async function avisarNovaSolicitacaoTitular(dados: {
   ].join('\n');
 
   await transporte.sendMail({
-    from: `Sigiloteca <${process.env.SMTP_USER}>`,
+    from: `Sigiloteca <${remetente()}>`,
     to: process.env.AVISO_TITULARES_PARA,
     subject: 'Nova solicitação de titular – Sigiloteca',
     text: texto,
