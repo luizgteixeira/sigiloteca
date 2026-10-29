@@ -75,6 +75,7 @@ export async function GET() {
 
   const entries: Record<string, Uint8Array> = {};
   const manifest = [];
+  const pastasUsadas = new Set<string>();
   let totalBytes = 0;
 
   for (const documento of documentos ?? []) {
@@ -102,7 +103,15 @@ export async function GET() {
     );
     const category = sanitizePathPart(documento.categoria);
     const title = sanitizePathPart(documento.titulo) || documento.id;
-    const entryPath = `${category}/${title}-${documento.id.slice(0, 8)}/${filename}`;
+    // Pasta com o próprio título; só ganha "(2)", "(3)"… quando outro
+    // documento da mesma categoria tem o mesmo título — senão um
+    // sobrescreveria o outro dentro do ZIP. O id fica no manifest.json.
+    let pasta = `${category}/${title}`;
+    for (let n = 2; pastasUsadas.has(pasta.toLowerCase()); n++) {
+      pasta = `${category}/${title} (${n})`;
+    }
+    pastasUsadas.add(pasta.toLowerCase());
+    const entryPath = `${pasta}/${filename}`;
     entries[entryPath] = new Uint8Array(await file.arrayBuffer());
 
     manifest.push({

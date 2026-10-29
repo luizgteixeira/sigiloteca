@@ -211,6 +211,8 @@ export function DocumentList({
                     ) : documento.signedUrl ? (
                       <a
                         href={documento.signedUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="font-body text-sm font-medium text-accent underline transition-colors hover:text-ink"
                       >
                         Baixar
