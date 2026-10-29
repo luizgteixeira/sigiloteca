@@ -1,6 +1,7 @@
 import { zipSync, strToU8 } from 'fflate';
 import { createClient } from '@/lib/supabase/server';
-import { getOrCreateWorkspace } from '@/lib/workspace';
+import { getEscritorio } from '@/lib/workspace';
+import { pode } from '@/lib/permissoes';
 import { logAuditEvent } from '@/app/actions/audit';
 
 export const runtime = 'nodejs';
@@ -27,7 +28,14 @@ export async function GET() {
     return Response.json({ error: 'Não autenticado.' }, { status: 401 });
   }
 
-  const workspace = await getOrCreateWorkspace(supabase, user.id, user.email);
+  const escritorio = await getEscritorio(supabase, user.id);
+  if (!escritorio || !pode(escritorio.papel, 'exportar')) {
+    return Response.json(
+      { error: 'Só administradores do escritório podem exportar.' },
+      { status: 403 }
+    );
+  }
+  const { workspace } = escritorio;
 
   // Reaproveita o audit_log (evento document_export já gravado a cada
   // exportação) em vez de criar uma tabela nova só pra contagem — evita

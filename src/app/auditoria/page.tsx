@@ -3,7 +3,10 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { formatarDataHora } from '@/lib/datas';
 import { VoltarAoTopo } from '@/components/voltar-ao-topo';
-import { getOrCreateWorkspace } from '@/lib/workspace';
+import { getEscritorio } from '@/lib/workspace';
+import { SemEscritorio } from '@/components/sem-escritorio';
+import { pode } from '@/lib/permissoes';
+import { redirect } from 'next/navigation';
 import {
   AUDIT_ACTION_LABELS,
   describeAuditEvent,
@@ -22,7 +25,14 @@ export default async function AuditoriaPage() {
     return null;
   }
 
-  const workspace = await getOrCreateWorkspace(supabase, user.id, user.email);
+  const escritorio = await getEscritorio(supabase, user.id);
+  if (!escritorio) {
+    return <SemEscritorio />;
+  }
+  const { workspace, papel } = escritorio;
+  if (!pode(papel, 'auditoria')) {
+    redirect('/');
+  }
 
   const { data: eventos } = await supabase
     .from('audit_log')

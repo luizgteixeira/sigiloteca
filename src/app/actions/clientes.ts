@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { verificarPermissao } from '@/lib/workspace';
 import type { ActionResult } from './documentos';
 import { logAuditEvent } from './audit';
 
@@ -146,6 +147,10 @@ export async function deleteCliente(
   workspaceId: string
 ): Promise<ActionResult> {
   const supabase = await createClient();
+  const semPermissao = await verificarPermissao(supabase, 'acoes_permanentes');
+  if (semPermissao) {
+    return { error: semPermissao };
+  }
 
   const { data: cliente } = await supabase
     .from('cliente')

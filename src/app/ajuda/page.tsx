@@ -14,6 +14,7 @@ const TEMAS = [
   { id: 'oficios', titulo: 'Modelo padrão de Ofícios' },
   { id: 'titulares', titulo: 'Solicitações de titulares (LGPD)' },
   { id: 'exportar', titulo: 'Exportar tudo' },
+  { id: 'equipe', titulo: 'Equipe e papéis' },
   { id: 'auditoria', titulo: 'Auditoria' },
 ];
 
@@ -385,6 +386,47 @@ export default function AjudaPage() {
             Não. A cópia oficial fica na nuvem; a exportação é uma cópia extra
             sob demanda. Guarde o .zip em local seguro: ele contém documentos
             sigilosos.
+          </p>
+        </Pergunta>
+      </Tema>
+
+      <Tema id="equipe" titulo="Equipe e papéis">
+        <Pergunta pergunta="Quem pode fazer o quê?">
+          <ul className="list-disc space-y-1 pl-5">
+            <li>
+              <strong>Administrador:</strong> tudo — inclusive convidar e
+              remover pessoas, ver a auditoria, exportar, excluir e anonimizar
+              documentos e excluir clientes.
+            </li>
+            <li>
+              <strong>Advogado:</strong> ver, baixar, enviar e editar
+              documentos e clientes, e cuidar das solicitações de titulares.
+            </li>
+            <li>
+              <strong>Assistente:</strong> ver, baixar, enviar e editar
+              documentos e clientes.
+            </li>
+          </ul>
+          <p>
+            O que um papel não permite nem aparece na tela, e o banco de dados
+            também recusa — não dá para contornar.
+          </p>
+        </Pergunta>
+        <Pergunta pergunta="Como coloco alguém na equipe?">
+          <p>
+            Administradores usam o menu <strong>Equipe</strong>: informe o
+            e-mail e o papel e clique em &ldquo;Enviar convite&rdquo;. A pessoa
+            recebe um link para criar a senha (vale por tempo limitado). Se o
+            e-mail não puder ser enviado, a tela mostra o link para você
+            repassar.
+          </p>
+        </Pergunta>
+        <Pergunta pergunta="E quando alguém sai do escritório?">
+          <p>
+            Em Equipe, clique em &ldquo;Remover&rdquo;. O acesso aos documentos
+            acaba na hora; nada do que a pessoa cadastrou é apagado, e tudo o
+            que ela fez continua na auditoria. O escritório precisa ter sempre
+            pelo menos um administrador, e ninguém remove a si mesmo.
           </p>
         </Pergunta>
       </Tema>

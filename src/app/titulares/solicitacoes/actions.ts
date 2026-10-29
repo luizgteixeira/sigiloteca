@@ -2,12 +2,17 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { verificarPermissao } from '@/lib/workspace';
 import type { ActionResult } from '@/app/actions/documentos';
 
 export async function marcarSolicitacaoConcluida(
   id: string
 ): Promise<ActionResult> {
   const supabase = await createClient();
+  const semPermissao = await verificarPermissao(supabase, 'titulares');
+  if (semPermissao) {
+    return { error: semPermissao };
+  }
   const { error } = await supabase
     .from('solicitacao_titular')
     .update({ status: 'concluida', concluida_em: new Date().toISOString() })

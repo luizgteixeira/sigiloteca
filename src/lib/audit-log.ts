@@ -13,6 +13,9 @@ export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
   client_create: 'Cliente cadastrado',
   client_update: 'Cliente alterado',
   client_delete: 'Cliente excluído',
+  member_invite: 'Membro convidado',
+  member_role_change: 'Papel de membro alterado',
+  member_remove: 'Membro removido',
 };
 
 export type AuditLogRow = {
@@ -87,6 +90,18 @@ export function describeAuditEvent(row: AuditLogRow): string {
       if (motivo === 'inatividade') return 'Por inatividade';
       if (motivo === 'todas_sessoes') return 'Encerrou todas as sessões';
       return '—';
+    }
+    case 'member_invite':
+    case 'member_role_change':
+    case 'member_remove': {
+      const email = typeof metadata.email === 'string' ? metadata.email : null;
+      const papel = typeof metadata.papel === 'string' ? metadata.papel : null;
+      const anterior =
+        typeof metadata.papel_anterior === 'string' ? metadata.papel_anterior : null;
+      if (action === 'member_role_change' && anterior && papel) {
+        return `${email ?? '—'}: ${anterior} → ${papel}`;
+      }
+      return [email, papel].filter(Boolean).join(' · ') || '—';
     }
     case 'login':
       if (metadata.motivo === 'redefinicao_senha') {

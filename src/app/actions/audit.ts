@@ -1,7 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { getOrCreateWorkspace } from '@/lib/workspace';
+import { getEscritorio } from '@/lib/workspace';
 
 export type AuditAction =
   | 'login'
@@ -14,7 +14,10 @@ export type AuditAction =
   | 'document_anonymize'
   | 'client_create'
   | 'client_update'
-  | 'client_delete';
+  | 'client_delete'
+  | 'member_invite'
+  | 'member_role_change'
+  | 'member_remove';
 
 export type LogAuditEventOptions = {
   resourceType?: string;
@@ -36,11 +39,9 @@ export async function logAuditEvent(
     } = await supabase.auth.getUser();
     if (!user) return;
 
-    const workspace = await getOrCreateWorkspace(
-      supabase,
-      user.id,
-      user.email
-    );
+    const escritorio = await getEscritorio(supabase, user.id);
+    if (!escritorio) return;
+    const { workspace } = escritorio;
 
     await supabase.from('audit_log').insert({
       workspace_id: workspace.id,

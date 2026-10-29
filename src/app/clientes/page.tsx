@@ -1,7 +1,9 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { getOrCreateWorkspace } from '@/lib/workspace';
+import { getEscritorio } from '@/lib/workspace';
+import { SemEscritorio } from '@/components/sem-escritorio';
+import { pode } from '@/lib/permissoes';
 import { ClienteForm } from '@/components/cliente-form';
 import { ClienteList, type ClienteRow } from '@/components/cliente-list';
 
@@ -15,7 +17,11 @@ export default async function ClientesPage() {
     return null;
   }
 
-  const workspace = await getOrCreateWorkspace(supabase, user.id, user.email);
+  const escritorio = await getEscritorio(supabase, user.id);
+  if (!escritorio) {
+    return <SemEscritorio />;
+  }
+  const { workspace, papel } = escritorio;
 
   const { data: clientes } = await supabase
     .from('cliente')
@@ -77,7 +83,11 @@ export default async function ClientesPage() {
       </header>
 
       <ClienteForm workspaceId={workspace.id} />
-      <ClienteList clientes={rows} workspaceId={workspace.id} />
+      <ClienteList
+        clientes={rows}
+        workspaceId={workspace.id}
+        podeExcluir={pode(papel, 'acoes_permanentes')}
+      />
     </div>
   );
 }

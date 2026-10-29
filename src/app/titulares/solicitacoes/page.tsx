@@ -1,6 +1,10 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { getEscritorio } from '@/lib/workspace';
+import { pode } from '@/lib/permissoes';
+import { SemEscritorio } from '@/components/sem-escritorio';
 import {
   SolicitacoesTitularList,
   type SolicitacaoRow,
@@ -16,6 +20,14 @@ export default async function SolicitacoesTitularPage() {
 
   if (!user) {
     return null;
+  }
+
+  const escritorio = await getEscritorio(supabase, user.id);
+  if (!escritorio) {
+    return <SemEscritorio />;
+  }
+  if (!pode(escritorio.papel, 'titulares')) {
+    redirect('/');
   }
 
   const { data: solicitacoes } = await supabase

@@ -17,9 +17,12 @@ export type ClienteRow = {
 export function ClienteList({
   clientes,
   workspaceId,
+  podeExcluir,
 }: {
   clientes: ClienteRow[];
   workspaceId: string;
+  // Só administradores excluem clientes (o banco também recusa).
+  podeExcluir: boolean;
 }) {
   const router = useRouter();
   const [editando, setEditando] = useState<ClienteRow | null>(null);
@@ -147,17 +150,19 @@ export function ClienteList({
                     >
                       Editar
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setDeleteErrorMsg(null);
-                        setConfirmacaoExclusao('');
-                        setExcluindo(cliente);
-                      }}
-                      className="font-body text-sm font-medium text-danger underline transition-colors hover:text-ink"
-                    >
-                      Excluir
-                    </button>
+                    {podeExcluir && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDeleteErrorMsg(null);
+                          setConfirmacaoExclusao('');
+                          setExcluindo(cliente);
+                        }}
+                        className="font-body text-sm font-medium text-danger underline transition-colors hover:text-ink"
+                      >
+                        Excluir
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>

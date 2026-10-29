@@ -2,7 +2,8 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { getOrCreateWorkspace } from '@/lib/workspace';
+import { getEscritorio } from '@/lib/workspace';
+import { SemEscritorio } from '@/components/sem-escritorio';
 import { OficioEditor } from '@/components/oficio-editor';
 
 // O modelo padrão traz, depois de um separador "---", uma seção de
@@ -39,7 +40,11 @@ export default async function EditarOficioPage({
     return null;
   }
 
-  const workspace = await getOrCreateWorkspace(supabase, user.id, user.email);
+  const escritorio = await getEscritorio(supabase, user.id);
+  if (!escritorio) {
+    return <SemEscritorio />;
+  }
+  const { workspace } = escritorio;
 
   const { data: documento } = await supabase
     .from('documento')

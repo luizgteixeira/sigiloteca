@@ -3,6 +3,11 @@
 // Supabase (cujo template de assunto/corpo só é editável no plano Pro).
 // O link sai pronto pra você colar num e-mail seu, com o texto que quiser.
 //
+// ATENÇÃO (desde a fase multiusuário, 29/10/2026): este script só cria a
+// conta — não coloca a pessoa em nenhum escritório, e sem escritório ela
+// não vê nada. Para convidar alguém para um escritório, use a tela Equipe
+// (administrador). O script fica para casos administrativos pontuais.
+//
 // Uso: node scripts/convidar-usuario.mjs email@exemplo.com
 
 import { createClient } from '@supabase/supabase-js';

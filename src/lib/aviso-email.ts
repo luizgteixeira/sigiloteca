@@ -13,6 +13,36 @@ function configurado(): boolean {
   );
 }
 
+// Envio genérico (texto simples). false = SMTP não configurado, nada saiu;
+// erro de envio propaga para quem chamou decidir o que fazer.
+export async function enviarEmail(mensagem: {
+  para: string;
+  assunto: string;
+  texto: string;
+}): Promise<boolean> {
+  if (
+    !process.env.SMTP_HOST ||
+    !process.env.SMTP_USER ||
+    !process.env.SMTP_PASS
+  ) {
+    return false;
+  }
+  const porta = Number(process.env.SMTP_PORT || 465);
+  const transporte = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: porta,
+    secure: porta === 465,
+    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+  });
+  await transporte.sendMail({
+    from: `Sigiloteca <${process.env.SMTP_USER}>`,
+    to: mensagem.para,
+    subject: mensagem.assunto,
+    text: mensagem.texto,
+  });
+  return true;
+}
+
 export async function avisarNovaSolicitacaoTitular(dados: {
   direito: string;
   recebidaEm: string;

@@ -68,9 +68,12 @@ function motivoBloqueio(documento: DocumentoRow, acao: Acao): string | null {
 export function DocumentList({
   documentos,
   workspaceId,
+  podeAcoesPermanentes,
 }: {
   documentos: DocumentoRow[];
   workspaceId: string;
+  // Só administradores anonimizam ou excluem (o banco também recusa).
+  podeAcoesPermanentes: boolean;
 }) {
   const [processandoId, setProcessandoId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -169,6 +172,7 @@ export function DocumentList({
 
   return (
     <div className="flex flex-col gap-3">
+{podeAcoesPermanentes && (
       <aside className="rounded-md border border-warning bg-warning-soft px-4 py-3 font-body text-sm text-ink">
         <strong className="font-semibold">Atenção:</strong> a exclusão remove o
         arquivo, o registro da base de dados e todo o histórico de versões. A
@@ -176,6 +180,7 @@ export function DocumentList({
         mas mantém o registro. As duas ações são permanentes e não podem ser
         desfeitas.
       </aside>
+      )}
       {!pendente && errorMsg && (
         <p className="flex items-start justify-between gap-3 rounded-md bg-danger-soft px-3 py-2 font-body text-sm font-semibold text-danger">
           <span>{errorMsg}</span>
@@ -268,21 +273,23 @@ export function DocumentList({
                     ) : (
                       <span className="text-ink-muted">—</span>
                     )}
-                    <button
-                      type="button"
-                      disabled={processandoId === documento.id}
-                      onClick={(evento) =>
-                        abrirMenu(documento, evento.currentTarget)
-                      }
-                      aria-haspopup="menu"
-                      aria-expanded={menu?.documento.id === documento.id}
-                      className="ml-2 whitespace-nowrap rounded-md border border-line px-2 py-1 font-body text-xs text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink disabled:opacity-60"
-                    >
-                      {processandoId === documento.id
-                        ? ACAO_CONFIG[pendente?.acao ?? 'excluir']
-                            .verboEmAndamento
-                        : 'Mais ações ▾'}
-                    </button>
+                    {podeAcoesPermanentes && (
+                      <button
+                        type="button"
+                        disabled={processandoId === documento.id}
+                        onClick={(evento) =>
+                          abrirMenu(documento, evento.currentTarget)
+                        }
+                        aria-haspopup="menu"
+                        aria-expanded={menu?.documento.id === documento.id}
+                        className="ml-2 whitespace-nowrap rounded-md border border-line px-2 py-1 font-body text-xs text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink disabled:opacity-60"
+                      >
+                        {processandoId === documento.id
+                          ? ACAO_CONFIG[pendente?.acao ?? 'excluir']
+                              .verboEmAndamento
+                          : 'Mais ações ▾'}
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>

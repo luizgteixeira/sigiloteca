@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { verificarPermissao } from '@/lib/workspace';
 import { formatarData } from '@/lib/datas';
 import { logAuditEvent } from './audit';
 
@@ -459,6 +460,10 @@ export async function anonymizeDocumento(
   workspaceId: string
 ): Promise<ActionResult> {
   const supabase = await createClient();
+  const semPermissao = await verificarPermissao(supabase, 'acoes_permanentes');
+  if (semPermissao) {
+    return { error: semPermissao };
+  }
   const { data: documento, error: documentoError } = await supabase
     .from('documento')
     .select(
@@ -556,6 +561,10 @@ export async function deleteDocumento(
   workspaceId: string
 ): Promise<ActionResult> {
   const supabase = await createClient();
+  const semPermissao = await verificarPermissao(supabase, 'acoes_permanentes');
+  if (semPermissao) {
+    return { error: semPermissao };
+  }
   const { data: documento, error: documentoError } = await supabase
     .from('documento')
     .select('id, titulo, categoria, storage_path, retention_until, legal_hold')

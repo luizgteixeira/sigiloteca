@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
-import { getOrCreateWorkspace } from '@/lib/workspace';
+import { getEscritorio } from '@/lib/workspace';
+import { SemEscritorio } from '@/components/sem-escritorio';
+import { PAPEL_LABELS, pode } from '@/lib/permissoes';
 import { signOut } from './actions';
 import { UploadForm } from '@/components/upload-form';
 import { NewOficioForm } from '@/components/new-oficio-form';
@@ -33,7 +35,11 @@ export default async function Home({
     return null;
   }
 
-  const workspace = await getOrCreateWorkspace(supabase, user.id, user.email);
+  const escritorio = await getEscritorio(supabase, user.id);
+  if (!escritorio) {
+    return <SemEscritorio />;
+  }
+  const { workspace, papel } = escritorio;
   const displayName =
     user.user_metadata?.full_name ?? user.user_metadata?.name ?? user.email;
 
@@ -125,7 +131,7 @@ export default async function Home({
               Sigiloteca
             </p>
             <p className="font-body text-sm text-ink-muted">
-              Área de documentos · {displayName}
+              Área de documentos · {displayName} · {PAPEL_LABELS[papel]}
             </p>
           </div>
         </div>
@@ -139,18 +145,30 @@ export default async function Home({
           >
             Clientes
           </Link>
-          <Link
-            href="/auditoria"
-            className="whitespace-nowrap rounded-md border border-line bg-surface px-3 py-2 font-body text-sm text-ink shadow-sm transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent"
-          >
-            Auditoria
-          </Link>
-          <Link
-            href="/titulares/solicitacoes"
-            className="whitespace-nowrap rounded-md border border-line bg-surface px-3 py-2 font-body text-sm text-ink shadow-sm transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent"
-          >
-            Titulares
-          </Link>
+          {pode(papel, 'auditoria') && (
+            <Link
+              href="/auditoria"
+              className="whitespace-nowrap rounded-md border border-line bg-surface px-3 py-2 font-body text-sm text-ink shadow-sm transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent"
+            >
+              Auditoria
+            </Link>
+          )}
+          {pode(papel, 'titulares') && (
+            <Link
+              href="/titulares/solicitacoes"
+              className="whitespace-nowrap rounded-md border border-line bg-surface px-3 py-2 font-body text-sm text-ink shadow-sm transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent"
+            >
+              Titulares
+            </Link>
+          )}
+          {pode(papel, 'equipe') && (
+            <Link
+              href="/equipe"
+              className="whitespace-nowrap rounded-md border border-line bg-surface px-3 py-2 font-body text-sm text-ink shadow-sm transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent"
+            >
+              Equipe
+            </Link>
+          )}
           <Link
             href="/conta"
             className="whitespace-nowrap rounded-md border border-line bg-surface px-3 py-2 font-body text-sm text-ink shadow-sm transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent"
@@ -163,12 +181,14 @@ export default async function Home({
           >
             Ajuda
           </Link>
-          <a
-            href="/api/exportar"
-            className="whitespace-nowrap rounded-md border border-line bg-surface px-3 py-2 font-body text-sm text-ink shadow-sm transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent"
-          >
-            Exportar tudo
-          </a>
+          {pode(papel, 'exportar') && (
+            <a
+              href="/api/exportar"
+              className="whitespace-nowrap rounded-md border border-line bg-surface px-3 py-2 font-body text-sm text-ink shadow-sm transition-colors hover:border-accent/40 hover:bg-accent-soft hover:text-accent"
+            >
+              Exportar tudo
+            </a>
+          )}
           <form action={signOut}>
             <button
               type="submit"
@@ -210,7 +230,11 @@ export default async function Home({
         </button>
       </form>
 
-      <DocumentList documentos={documentosComUrl} workspaceId={workspace.id} />
+      <DocumentList
+        documentos={documentosComUrl}
+        workspaceId={workspace.id}
+        podeAcoesPermanentes={pode(papel, 'acoes_permanentes')}
+      />
     </div>
   );
 }
