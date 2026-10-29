@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   alterarPapel,
   convidarMembro,
+  gerarNovoLinkConvite,
   removerMembro,
   renomearEscritorio,
 } from '@/app/equipe/actions';
@@ -17,7 +18,20 @@ export type MembroRow = {
   papel: Papel;
   desde: string;
   souEu: boolean;
+  // Ainda não aceitou o convite (nunca entrou).
+  pendente: boolean;
 };
+
+function avisoSemEmail(
+  email: string,
+  motivo: 'nao_configurado' | 'falha' | undefined
+): string {
+  const porque =
+    motivo === 'nao_configurado'
+      ? 'o envio de e-mails ainda não está configurado no servidor'
+      : 'o servidor de e-mail recusou o envio';
+  return `Não foi possível mandar o e-mail para ${email}: ${porque}. Copie o link abaixo e envie você mesmo (WhatsApp, e-mail pessoal).`;
+}
 
 const BOTAO =
   'rounded-md bg-accent px-4 py-2 font-body text-sm font-medium text-surface transition-colors hover:bg-accent/85 disabled:opacity-50';
@@ -38,6 +52,44 @@ export function EquipeGerenciar({
   const [linkManual, setLinkManual] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
   const [removendo, setRemovendo] = useState<MembroRow | null>(null);
+  const [copiado, setCopiado] = useState(false);
+
+  async function copiarLink() {
+    if (!linkManual) return;
+    try {
+      await navigator.clipboard.writeText(linkManual);
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 2000);
+    } catch {
+      // Sem permissão de área de transferência: o campo continua lá para
+      // selecionar e copiar à mão.
+    }
+  }
+
+  async function aoGerarNovoLink(membro: MembroRow) {
+    setOcupado(true);
+    setErro(null);
+    setAviso(null);
+    setLinkManual(null);
+    try {
+      const resultado = await gerarNovoLinkConvite(membro.userId);
+      if (resultado.error !== null) {
+        setErro(resultado.error);
+        return;
+      }
+      if (resultado.linkManual) {
+        setLinkManual(resultado.linkManual);
+        setAviso(avisoSemEmail(membro.email, resultado.motivoEmail));
+      } else {
+        setAviso(`Novo link de convite enviado para ${membro.email}.`);
+      }
+    } catch (falha) {
+      console.error(falha);
+      setErro('Não foi possível concluir agora. Recarregue a página (F5) e tente de novo.');
+    } finally {
+      setOcupado(false);
+    }
+  }
 
   async function executar(acao: () => Promise<{ error: string | null }>, sucesso: string) {
     setOcupado(true);
@@ -77,9 +129,7 @@ export function EquipeGerenciar({
       }
       if (resultado.linkManual) {
         setLinkManual(resultado.linkManual);
-        setAviso(
-          `${email} foi incluído(a) na equipe, mas o e-mail de convite não pôde ser enviado. Copie o link abaixo e envie você mesmo.`
-        );
+        setAviso(avisoSemEmail(email, resultado.motivoEmail));
       } else if (resultado.jaTinhaConta) {
         setAviso(`${email} já tinha conta e foi incluído(a) na equipe. Avisamos por e-mail.`);
       } else {
@@ -105,13 +155,18 @@ export function EquipeGerenciar({
         <div role="status" className="flex flex-col gap-2 rounded-md bg-success-soft px-3 py-2 font-body text-sm text-success">
           <p>{aviso}</p>
           {linkManual && (
-            <input
-              readOnly
-              value={linkManual}
-              onFocus={(evento) => evento.currentTarget.select()}
-              aria-label="Link de convite para copiar"
-              className={`${CAMPO} font-mono text-xs`}
-            />
+            <div className="flex flex-wrap gap-2">
+              <input
+                readOnly
+                value={linkManual}
+                onFocus={(evento) => evento.currentTarget.select()}
+                aria-label="Link de convite para copiar"
+                className={`${CAMPO} min-w-0 flex-1 font-mono text-xs`}
+              />
+              <button type="button" onClick={copiarLink} className={BOTAO}>
+                {copiado ? 'Copiado!' : 'Copiar link'}
+              </button>
+            </div>
           )}
         </div>
       )}
@@ -200,10 +255,27 @@ export function EquipeGerenciar({
                       Você
                     </span>
                   )}
+                  {membro.pendente && (
+                    <span className="ml-2 rounded-full bg-warning-soft px-2 py-0.5 font-mono text-[10px] uppercase text-ink">
+                      Convite pendente
+                    </span>
+                  )}
                 </p>
                 <p className="font-body text-xs text-ink-muted">
-                  Na equipe desde {formatarData(membro.desde)}
+                  {membro.pendente
+                    ? `Convidado em ${formatarData(membro.desde)} · ainda não criou a senha`
+                    : `Na equipe desde ${formatarData(membro.desde)}`}
                 </p>
+                {membro.pendente && (
+                  <button
+                    type="button"
+                    disabled={ocupado}
+                    onClick={() => aoGerarNovoLink(membro)}
+                    className="mt-1 font-body text-xs font-medium text-accent underline transition-colors hover:text-ink disabled:opacity-50"
+                  >
+                    Gerar novo link de convite
+                  </button>
+                )}
               </div>
               <div className="flex items-center gap-3">
                 <select
@@ -242,7 +314,7 @@ export function EquipeGerenciar({
                     onClick={() => setRemovendo(membro)}
                     className="font-body text-sm font-medium text-danger underline transition-colors hover:text-ink disabled:opacity-50"
                   >
-                    Remover
+                    {membro.pendente ? 'Cancelar convite' : 'Remover'}
                   </button>
                 )}
               </div>
@@ -260,13 +332,24 @@ export function EquipeGerenciar({
         >
           <div className="w-full max-w-md rounded-lg border border-danger bg-surface p-6 shadow-xl">
             <h2 id="remover-titulo" className="font-display text-xl font-semibold text-danger">
-              Remover da equipe
+              {removendo.pendente ? 'Cancelar convite' : 'Remover da equipe'}
             </h2>
             <p className="mt-3 font-body text-sm text-ink">
-              <strong className="break-all">{removendo.email}</strong> perde o
-              acesso a todos os documentos e clientes do escritório na hora.
-              Nada do que essa pessoa cadastrou é apagado, e ela pode ser
-              convidada de novo depois.
+              {removendo.pendente ? (
+                <>
+                  O convite para{' '}
+                  <strong className="break-all">{removendo.email}</strong> deixa
+                  de valer: mesmo que a pessoa use o link, não terá acesso ao
+                  escritório. Dá para convidar de novo depois.
+                </>
+              ) : (
+                <>
+                  <strong className="break-all">{removendo.email}</strong> perde
+                  o acesso a todos os documentos e clientes do escritório na
+                  hora. Nada do que essa pessoa cadastrou é apagado, e ela pode
+                  ser convidada de novo depois.
+                </>
+              )}
             </p>
             <div className="mt-5 flex justify-end gap-3">
               <button

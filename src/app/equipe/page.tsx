@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { getEscritorio } from '@/lib/workspace';
 import { PAPEIS, PAPEL_DESCRICOES, PAPEL_LABELS, pode, type Papel } from '@/lib/permissoes';
 import { SemEscritorio } from '@/components/sem-escritorio';
@@ -32,12 +33,27 @@ export default async function EquipePage() {
     .eq('workspace_id', escritorio.workspace.id)
     .order('created_at');
 
+  // Convite pendente = a conta nunca entrou (não criou a senha pelo link).
+  // last_sign_in_at só é legível pela service role; sem ela, o status fica
+  // desconhecido e a tela não mostra o selo.
+  const admin = createAdminClient();
+  const jaEntrou = new Map<string, boolean>();
+  if (admin) {
+    await Promise.all(
+      (membros ?? []).map(async (membro) => {
+        const { data } = await admin.auth.admin.getUserById(membro.user_id);
+        jaEntrou.set(membro.user_id, Boolean(data.user?.last_sign_in_at));
+      })
+    );
+  }
+
   const rows: MembroRow[] = (membros ?? []).map((membro) => ({
     userId: membro.user_id,
     email: membro.email,
     papel: membro.papel as Papel,
     desde: membro.created_at,
     souEu: membro.user_id === user.id,
+    pendente: jaEntrou.has(membro.user_id) && !jaEntrou.get(membro.user_id),
   }));
 
   return (
