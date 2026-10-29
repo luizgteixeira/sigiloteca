@@ -43,6 +43,7 @@ export function SenhaInicialForm() {
           name="confirmarSenha"
           autoComplete="new-password"
           onValueChange={setConfirmacao}
+          bloquearColar
         />
         {confirmacaoDiferente && (
           <p className="font-body text-xs text-danger">
