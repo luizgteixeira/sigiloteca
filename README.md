@@ -65,7 +65,7 @@ Trabalho grande, feito em cima da Análise Jurídica da Angela e do checklist §
 - [x] **Anonimização de documentos** — ação manual e irreversível: apaga o arquivo e o histórico de versões do Storage, limpa cliente/processo/área/tags, mantém o registro como dado anonimizado de uso do controlador (LGPD art. 16, IV); bloqueada nas mesmas condições que a exclusão
 - [x] **Propagação de correção de dado** — corrigir o nome de um cliente atualiza automaticamente `documento.cliente` em todos os documentos vinculados (LGPD art. 18, III), em vez de deixar um nome antigo "congelado"
 - [x] **Exclusão de cliente com confirmação reforçada** — passou a exigir digitar "EXCLUIR", igual à exclusão de documento, já que apaga dados pessoais (endereço, e-mail, celular, CPF) em definitivo
-- [x] **Formulário de titulares** (`/titulares`, público + `/titulares/solicitacoes`, autenticado) — qualquer pessoa (cliente cadastrado ou não) pode exercer os direitos do art. 18 da LGPD; retorno ao titular continua manual
+- [x] **Formulário de titulares** (`/titulares`, público + `/titulares/solicitacoes`, autenticado) — qualquer pessoa (cliente cadastrado ou não) pode exercer os direitos do art. 18 da LGPD; o escritório recebe aviso por e-mail a cada pedido novo (desde 29/10), mas o retorno ao titular continua manual
 - [x] **Decisões jurídicas fechadas com a Angela**: comarca do foro (Belo Horizonte/MG), garantias dos suboperadores (Supabase/Cloudflare/Hostinger — redação da Cláusula 5 do contrato), segunda revisão jurídica externa (critério mantido: antes do 1º escritório-cliente pagante), normas da OAB seção 2 reestruturada (premissas técnicas vs. parecer jurídico separados)
 
 ### Redefinição de senha, fuso horário e deploy (15/10/2026)
@@ -78,10 +78,20 @@ Pedidos da Angela depois do uso real: horário errado na auditoria e nenhuma for
 - [x] **Endereço público atrás do proxy** — na Hostinger `request.url` é `http://0.0.0.0:3000`; links e redirecionamentos usam `origemPublica()` (`src/lib/site-url.ts`): `NEXT_PUBLIC_SITE_URL` → `x-forwarded-host`/`host` → `localhost`
 - [x] **Correções de fluxo** — link de e-mail inválido/usado/expirado mostra mensagem própria (antes: "Email ou senha inválidos"); o redirecionamento pro 2FA não carrega mais a query da rota anterior (antes a tela abria com "Código inválido" sem código digitado)
 - [x] **Next.js 16.3.1 → 16.3.8** — corrige 6 vulnerabilidades apontadas pela Hostinger (3 críticas); `npm audit --omit=dev` sem vulnerabilidades
-- [x] **Migração 16 aplicada em produção (29/10)** — conferido no banco que a 16 não tinha rodado (o log ainda era limpo após 12 meses); aplicada via SQL Editor e confirmado `interval '3 years'`. As migrações 11–15 já estavam aplicadas
-- [x] **Supabase Pro (29/10)** — backup diário (7 dias, só banco; arquivos do Storage continuam dependendo do "Exportar tudo"), "Prevent use of leaked passwords" ligado (o app mostra "senha aparece em vazamentos" em vez de erro genérico) e "Inactivity timeout" de 2h no servidor, reforçando o logout por inatividade do app
 
-**Ainda pendente** (ver `status-execucao-sigiloteca.md` para o detalhe completo): teste de restauração de backup (agora viável: plano Supabase Pro desde 29/10/2026, com backup diário), teste de incidente simulado, mecanismo de busca para titulares não cadastrados como cliente (aguardando processo da Angela), formalização por escrito da Política de Backup/Termos de Uso/Política de acesso mínimo (mérito já decidido, falta só redigir).
+### Senhas, ajuda, titulares e segurança (29/10/2026)
+
+- [x] **Migração 16 aplicada em produção** — conferido no banco que a 16 não tinha rodado (o log ainda era limpo após 12 meses); aplicada via SQL Editor e confirmado `interval '3 years'`. As migrações 11–15 já estavam aplicadas
+- [x] **Supabase Pro** — backup diário (7 dias, só banco; arquivos do Storage continuam dependendo do "Exportar tudo"), "Prevent use of leaked passwords" ligado e "Inactivity timeout" de 2h no servidor, reforçando o logout por inatividade do app
+- [x] **Formulários de senha** (Minha conta e `/definir-senha`) — recusa do Supabase traduzida (`motivoRecusaSenha`: "senha aparece em vazamentos", "precisa ser diferente da atual") em vez de erro genérico; "Salvar" desabilitado até cumprir todos os requisitos e a confirmação bater; colar/arrastar bloqueado em "Confirmar nova senha"; requisito cumprido destacado (fundo verde-claro, negrito, ícone preenchido)
+- [x] **Troca de senha não derruba mais o 2FA** — a conferência da senha atual usa um cliente Supabase isolado (sem cookies); antes ela substituía a sessão aal2 por uma aal1 e o usuário voltava pro desafio de MFA
+- [x] **Página de ajuda** (`/ajuda`, pública e liberada também no meio do desafio de 2FA) — só as dúvidas difíceis: 2FA (inclusive celular perdido, com contato do responsável técnico), senha, retenção/legal hold/anonimização/exclusão, titulares, exportação e auditoria; link "Ajuda" no menu, no login e na tela do código; "?" (`AjudaLink`) ao lado do legal hold e do 2FA. **Textos de Retenção e Titulares aguardam revisão da Angela**
+- [x] **Aviso por e-mail de solicitação de titular** — o formulário público dispara e-mail (nodemailer, SMTP da Hostinger, `src/lib/aviso-email.ts`) para `AVISO_TITULARES_PARA` com o direito pedido, a data e o link do painel — sem nome, e-mail, CPF ou descrição do titular. Best-effort: sem as variáveis `SMTP_*` ou com falha no envio, a solicitação é registrada normalmente
+- [x] **Exportação** — pastas do ZIP só com o título (sufixo "(2)", "(3)" apenas para título repetido na mesma categoria; o id fica no `manifest.json`); documento anonimizado entra só no manifest (`arquivo: null`), em vez de derrubar a exportação inteira com 502 ao tentar baixar um arquivo já apagado
+- [x] **Interface** — "Baixar" abre em nova aba; "Sua conta" virou "Minha conta"; botão flutuante "voltar ao início" (`VoltarAoTopo`) na Ajuda e na Auditoria
+- [x] **Next.js 16.3.8 → 16.4.3** — corrige uma RCE crítica na otimização de imagens com SVG, um DoS via Server Actions e uma RCE em `use cache`, além do zod; `npm audit` sem vulnerabilidades (inclusive dependências de desenvolvimento)
+
+**Ainda pendente** (ver `status-execucao-sigiloteca.md` para o detalhe completo): teste de restauração de backup (agora viável: plano Supabase Pro desde 29/10/2026, com backup diário), revisão pela Angela dos textos de Retenção e Titulares da página `/ajuda`, teste de incidente simulado, mecanismo de busca para titulares não cadastrados como cliente (aguardando processo da Angela), formalização por escrito da Política de Backup/Termos de Uso/Política de acesso mínimo (mérito já decidido, falta só redigir).
 
 - [x] Migrações `20260910000011`–`20260910000016` conferidas e aplicadas em produção (29/10/2026). Como foram rodadas pelo SQL Editor, o histórico de migrações do Supabase fica vazio — para conferir, olhe direto as tabelas/funções.
 - [x] MFA e fluxo de e-mail (`/auth/confirm` → `/definir-senha`) validados com usuário real em produção, via redefinição de senha (15/10/2026)
@@ -138,6 +148,7 @@ sigiloteca/
 │   │   ├── documentos/[id]/editar/     Editor de Ofício em tela (preencher + salvar)
 │   │   ├── documentos/[id]/metadados/  Editar título/categoria/cliente/processo/área/tags
 │   │   ├── auditoria/      Log de eventos do workspace (só leitura)
+│   │   ├── ajuda/          Ajuda pública só para as dúvidas difíceis (2FA, senha, retenção, titulares, exportação, auditoria)
 │   │   ├── titulares/      Formulário público de direitos LGPD + solicitacoes/ (lista autenticada)
 │   │   ├── actions.ts       Server action de logout
 │   │   ├── actions/audit.ts        logAuditEvent + tipos de ação
@@ -147,19 +158,22 @@ sigiloteca/
 │   ├── components/         UploadForm, NewOficioForm, DocumentList, OficioEditor, ClienteForm, ClienteList,
 │   │                       ClienteCombobox, InactivityGuard, MfaManager, ChangePasswordForm,
 │   │                       PasswordRequisitosChecklist, SenhaInicialForm, EditarMetadadosForm,
-│   │                       SolicitacaoTitularForm, SolicitacoesTitularList
+│   │                       SolicitacaoTitularForm, SolicitacoesTitularList, PasswordField (bloqueia colar na
+│   │                       confirmação), AjudaLink ("?" para /ajuda), VoltarAoTopo
 │   └── lib/
 │       ├── supabase/       client.ts, server.ts, middleware.ts (sessão + MFA + rotas públicas)
 │       ├── datas.ts        Formatação de data/hora sempre no fuso de Brasília
 │       ├── site-url.ts     origemPublica(): endereço público do site atrás do proxy da Hostinger
+│       ├── aviso-email.ts  E-mail do próprio app (aviso de solicitação de titular) via SMTP da Hostinger
 │       ├── workspace.ts    getOrCreateWorkspace (bootstrap do workspace único)
 │       ├── audit-log.ts    Labels e descrição legível dos eventos de auditoria
-│       ├── password.ts     Requisitos de senha compartilhados (checklist + validação no servidor)
+│       ├── password.ts     Requisitos de senha (checklist + validação no servidor) + motivoRecusaSenha
 │       ├── retention.ts    Opções de fundamento jurídico de retenção
 │       └── titulares.ts    Labels dos direitos do titular (LGPD art. 18)
 ├── .env.local.example     Modelo do .env.local (o real é gitignorado, uma cópia por máquina) — inclui
-│                          NEXT_PUBLIC_SITE_URL e SUPABASE_SERVICE_ROLE_KEY (só scripts administrativos)
-└── package.json           Next.js 16, React 19, Tailwind 4, @supabase/supabase-js, @supabase/ssr
+│                          NEXT_PUBLIC_SITE_URL, SUPABASE_SERVICE_ROLE_KEY (só scripts administrativos) e
+│                          SMTP_* / AVISO_TITULARES_PARA (aviso de titulares; em produção, nas variáveis da Hostinger)
+└── package.json           Next.js 16.4, React 19, Tailwind 4, @supabase/supabase-js, @supabase/ssr, nodemailer
 ```
 
 ## Stack decidida (ADR-001)
