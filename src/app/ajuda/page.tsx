@@ -11,6 +11,7 @@ const TEMAS = [
   { id: 'dois-fatores', titulo: 'Verificação em duas etapas (2FA)' },
   { id: 'senha', titulo: 'Senha' },
   { id: 'retencao', titulo: 'Retenção, legal hold, anonimização e exclusão' },
+  { id: 'oficios', titulo: 'Modelo padrão de Ofícios' },
   { id: 'titulares', titulo: 'Solicitações de titulares (LGPD)' },
   { id: 'exportar', titulo: 'Exportar tudo' },
   { id: 'auditoria', titulo: 'Auditoria' },
@@ -272,6 +273,46 @@ export default function AjudaPage() {
             histórico de atuação), mas não precisa mais dos dados pessoais.
             Exclua quando nem o registro é necessário. Em caso de dúvida,
             consulte o responsável jurídico do escritório antes.
+          </p>
+        </Pergunta>
+      </Tema>
+
+      <Tema id="oficios" titulo="Modelo padrão de Ofícios">
+        <Pergunta pergunta="O que é o modelo padrão de Ofícios?">
+          <p>
+            É o documento-base de onde nascem todos os Ofícios do escritório.
+            Em &ldquo;Novo Ofício&rdquo;, o Sigiloteca faz uma cópia do modelo
+            e abre um editor na tela para preencher os campos marcados{' '}
+            <code>[entre colchetes]</code> — o contador mostra quantos ainda
+            faltam. O modelo em si nunca é alterado.
+          </p>
+        </Pergunta>
+        <Pergunta pergunta="Quando marco &ldquo;Marcar como modelo padrão de Ofícios&rdquo;?">
+          <p>
+            Só ao enviar o documento que vai servir de base, na categoria
+            Ofícios — em outras categorias a opção fica desabilitada. Para um
+            Ofício comum, já preenchido, deixe desmarcado.
+          </p>
+          <p>
+            O modelo pode ter, no fim, depois de uma linha com{' '}
+            <code>---</code>, orientações de preenchimento. Essa parte não vai
+            para os Ofícios criados a partir dele.
+          </p>
+        </Pergunta>
+        <Pergunta pergunta="Posso ter mais de um modelo padrão?">
+          <p>
+            Não: o escritório tem um único modelo padrão de Ofícios. Para
+            trocar, exclua o modelo atual e envie o novo com a opção marcada.
+            Se o modelo atual estiver com retenção ou legal hold, ele não pode
+            ser excluído antes do prazo.
+          </p>
+        </Pergunta>
+        <Pergunta pergunta="Por que não consigo editar o modelo na tela?">
+          <p>
+            O editor de Ofícios serve para preencher cópias, não o modelo —
+            assim ninguém altera a base sem querer. Os metadados do modelo
+            (título, tags etc.) podem ser editados normalmente; só a categoria
+            fica fixa em Ofícios.
           </p>
         </Pergunta>
       </Tema>
